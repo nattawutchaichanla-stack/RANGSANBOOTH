@@ -3479,7 +3479,7 @@ const TL_TALADCHIC_BLOCKS = [
 
 const TL_SCG2026_SEED_KEY = "rangsan-booth-tl-scg2026-seeded-v1";
 const TL_SCGBEWELL_SEED_KEY = "rangsan-booth-tl-scgbewell-seeded-v1";
-const TL_NOV19_SEED_KEY = "rangsan-booth-tl-nov19-seeded-v1";
+const TL_NOV19_SEED_KEY = "rangsan-booth-tl-nov19-seeded-v2";
 const TL_SCG2026_BLOCKS = [
   { id:"scg26_setup", time:"09:00", title:"Set up · เข้าจัดร้าน",
     items:[
@@ -3602,12 +3602,12 @@ const TL_NOV19_BLOCKS = [
       {id:"n19_o3", label:"เติมน้ำแข็ง นม แก้ว ฝา หลอด ให้พอตลอดช่วงขาย"},
       {id:"n19_o4", label:"ถ่ายคอนเทนต์: ทีมชง ลูกค้า หน้าบูธ เมนูขายดี"}
     ]},
-  { id:"n19_stock", time:"ช่วงท้าย", title:"เช็กสต๊อกช่วงท้ายงาน",
+  { id:"n19_stock", time:"15:30", title:"เช็กสต๊อกช่วงท้ายงาน",
     items:[
       {id:"n19_sk1", label:"นับแก้วที่เสิร์ฟแล้ว + เช็กเหลือจากเป้า 70"},
       {id:"n19_sk2", label:"แจ้งทีมเมนูที่วัตถุดิบใกล้หมด + เริ่มเก็บของที่ไม่ใช้"}
     ]},
-  { id:"n19_close", time:"ปิดงาน", title:"CLOSE — ปิดงาน · เก็บบูธ",
+  { id:"n19_close", time:"16:00", title:"CLOSE — จบงาน 16:00 · เก็บบูธ",
     items:[
       {id:"n19_c1", label:"ปิดรับออเดอร์ + นับแก้วจริงทั้งหมด"},
       {id:"n19_c2", label:"นับเงินสด กระทบยอด QR + สรุปยอดขายรวม"},
@@ -3619,10 +3619,11 @@ const TL_NOV19_BLOCKS = [
     items:[
       {id:"n19_i1", label:"วันพฤหัสบดีที่ 19 พฤศจิกายน 2569"},
       {id:"n19_i2", label:"เครื่องดื่ม 70 แก้ว · เมนู: กาแฟ ชา โกโก้ มัทฉะ"},
-      {id:"n19_i3", label:"เริ่มเสิร์ฟ 12:30 น."},
+      {id:"n19_i3", label:"เปิดบูธ 12:30 น. – จบงาน 16:00 น."},
       {id:"n19_i4", label:"ทีม: น้องหมวย + น้องปลายฝน (2 คน) + คนขับ: พี่น้ำแข็ง"},
       {id:"n19_i5", label:"น้ำแข็ง: ผู้จัดงานเตรียมไว้ให้ที่งาน"},
-      {id:"n19_i6", label:"⚠️ รอยืนยัน: ชื่องาน/สถานที่ + เวลาปิดบูธ"}
+      {id:"n19_i6", label:"อุปกรณ์: เตรียมตามเช็คลิสต์ในแอป (แท็บเช็คลิสต์) ก่อนขนขึ้นรถ"},
+      {id:"n19_i7", label:"⚠️ รอยืนยัน: ชื่องาน/สถานที่"}
     ]}
 ];
 const TL_PROJECTS_SEED = [
@@ -6208,10 +6209,9 @@ async function loadAll(){
   try{ const rs = await window.storage.get(TL_NOV19_SEED_KEY, true); n19Seeded = rs && rs.value === "done"; }catch(e){ n19Seeded = false; }
   if(!n19Seeded){
     if(!tlDataAll["tl_nov19"]) tlDataAll["tl_nov19"] = emptyTlData();
-    if(!tlDataAll["tl_nov19"].customBlocks || !tlDataAll["tl_nov19"].customBlocks.length){
-      tlDataAll["tl_nov19"].customBlocks = JSON.parse(JSON.stringify(TL_NOV19_BLOCKS));
-      tlChanged = true;
-    }
+    // force the latest schedule (adds close 16:00 + equipment note) for this auto-generated event
+    tlDataAll["tl_nov19"].customBlocks = JSON.parse(JSON.stringify(TL_NOV19_BLOCKS));
+    tlChanged = true;
     try{ await window.storage.set(TL_NOV19_SEED_KEY, "done", true); }catch(e){}
     if(currentTlProjectId === "tl_nov19") tlCustom = tlDataAll["tl_nov19"];
   }
