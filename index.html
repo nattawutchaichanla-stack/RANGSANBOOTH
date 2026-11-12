@@ -3126,7 +3126,7 @@ if (!window.storage) {
 const BASE_DATA = [
   { id:"cat_machine", title:"เครื่องมือ / เครื่องใช้ไฟฟ้า", items:[
     "เครื่องชง VBM LOLLO — 1 เครื่อง (3,250W)",
-    "เครื่องบด — 2 เครื่อง (1,450W)",
+    "เครื่องบด — 1 เครื่อง (1,450W)",
     "เครื่องตีฟองนม — 1 (370W)",
     "ปลั๊กพ่วง — 1 (1,500W)",
     "เครื่องปั่น — 1 (1,000W)",
@@ -3930,6 +3930,13 @@ const HISTORY_SEED_DATA = [
 let itemCostsSaveTimer = null;
 let budgetSaveTimer = null;
 
+// รายการที่ตัดออกถาวรจากฐานข้อมูลหลัก (index-stable — ไม่ทำ id/รูป/สถานะเลื่อน)
+// เมล็ดกาแฟตัวอื่น (เหลือ ศรีนวล 500 กรัม สำหรับชง) + เครื่องบดที่ไม่ใช้ (เหลือ 1 ตัว)
+const CL_REMOVED_SEED = [
+  "cat_material_18","cat_material_19","cat_material_23","cat_material_24",
+  "cat_material_25","cat_material_26","cat_material_27","cat_material_28",
+  "cat_machine_5","cat_machine_10","cat_machine_11","cat_machine_12"
+];
 function buildSections(){
   const rmSec = custom.removedSections || [];
   const secNames = custom.sectionNames || {};
@@ -3937,7 +3944,7 @@ function buildSections(){
     id: s.id,
     title: secNames[s.id] || s.title,
     custom: false,
-    items: [...s.items, ...(custom.extraItems[s.id]||[])].filter(it => !custom.removedIds.includes(it.id))
+    items: [...s.items, ...(custom.extraItems[s.id]||[])].filter(it => !custom.removedIds.includes(it.id) && !CL_REMOVED_SEED.includes(it.id))
   }));
   custom.customSections.filter(cs => !rmSec.includes(cs.id)).forEach(cs => {
     sections.push({
