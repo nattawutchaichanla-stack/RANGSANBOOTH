@@ -1747,7 +1747,7 @@
     .wrap{padding:16px 12px 90px;}
     .main-content .wrap{max-width:100%;}
     /* tighter checklist grid so item names get more room */
-    .cl-head, .cl-row{grid-template-columns:20px 1fr 58px 26px 42px !important; gap:6px !important;}
+    .cl-head, .cl-row{grid-template-columns:22px 1fr 66px 26px 40px !important; gap:7px !important;}
     .cl-row .cl-thumb, .cl-row .cl-thumb-cat, .cl-row .cl-thumb-add{display:none !important;}
     .cl-head .cl-h-name{grid-column:2 !important;}
     .cl-head .cl-h-qty{grid-column:3 !important;}
@@ -1791,7 +1791,7 @@
     .confirm-box{width:calc(100vw - 32px);max-width:400px;}
   }
   @media (max-width:380px){
-    .cl-head, .cl-row{grid-template-columns:18px 1fr 50px 22px 38px !important;}
+    .cl-head, .cl-row{grid-template-columns:20px 1fr 60px 24px 36px !important;}
     .cl-thumb, .cl-thumb-add, .cl-thumb-cat{width:30px;height:30px;}
     .cl-name{font-size:12.5px;}
     .stat-value{font-size:19px !important;}
@@ -1800,6 +1800,21 @@
   @media (max-width:860px){
     .sidebar{padding-top:calc(10px + env(safe-area-inset-top, 0px));}
     .wrap{padding-bottom:calc(90px + env(safe-area-inset-bottom, 0px));}
+  }
+  /* ===== Mobile touch refinements (iOS / Android) ===== */
+  @media (max-width:860px){
+    /* 16px prevents iOS Safari from auto-zooming when a field is focused */
+    input, select, textarea,
+    .cl-qty-input, .item-cost-input, .prompt-input,
+    .add-item-row input, .add-section-card input{
+      font-size:16px !important;
+    }
+    /* never let the page scroll sideways on a phone */
+    html, body{overflow-x:hidden;}
+    .wrap{max-width:100%;}
+    img, svg, pre{max-width:100%;}
+    /* qty field: clean ellipsis instead of a jagged mid-letter cut */
+    .cl-qty-input{text-overflow:ellipsis; white-space:nowrap;}
   }
   /* ===== Next event banner ===== */
   .next-event-banner{
