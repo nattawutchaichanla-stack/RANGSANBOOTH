@@ -2024,6 +2024,29 @@
   .hc-icon svg{ width:24px; height:24px; }
   .home-card.terra .hc-icon{ color:var(--terra); }
   .home-card.sage .hc-icon{ color:var(--sage-dark); }
+  /* ---- Timeline → LINE summary ---- */
+  .tl-toolbar{ display:flex; justify-content:flex-end; margin:0 0 14px; }
+  .tl-line-btn{
+    font-family:'Sarabun',sans-serif; font-size:14px; font-weight:600;
+    color:#fff; background:var(--sage-dark); border:none; cursor:pointer;
+    border-radius:999px; padding:9px 18px; box-shadow:var(--shadow-sm);
+    transition:transform .12s, background .15s;
+  }
+  .tl-line-btn:hover{ transform:translateY(-1px); background:var(--sage); }
+  .tl-line-btn:active{ transform:translateY(0); }
+  .tlline-box{ text-align:left; }
+  .tlline-hint{ font-size:13px; color:var(--muted); margin:2px 0 10px; }
+  .tlline-text{
+    width:100%; box-sizing:border-box; font-family:'Sarabun',sans-serif;
+    font-size:14px; line-height:1.6; color:var(--ink);
+    border:1px solid rgba(28,27,25,0.14); border-radius:var(--radius-sm);
+    background:var(--paper); padding:12px 13px; resize:vertical; max-height:50vh;
+  }
+  .tlline-text:focus{ outline:2px solid var(--sage-soft); }
+  @media (max-width:560px){
+    .tl-line-btn{ width:100%; padding:11px 18px; font-size:15px; }
+    .tlline-box{ width:calc(100vw - 32px); max-width:460px; }
+  }
 </style>
 </head>
 <body>
@@ -2133,6 +2156,10 @@
     <div class="event-info" id="tl-project-header">
       <div class="event-info-title" id="tl-project-name">—</div>
       <div class="event-info-sub" id="tl-project-status"></div>
+    </div>
+
+    <div class="tl-toolbar">
+      <button id="tl-line-btn" class="tl-line-btn">💬 สรุปแผนงานลงไลน์</button>
     </div>
 
     <div class="timeline" id="timeline"></div>
@@ -2893,6 +2920,18 @@
     <div class="confirm-actions">
       <button id="prompt-cancel-btn" class="confirm-btn cancel">ยกเลิก</button>
       <button id="prompt-ok-btn" class="confirm-btn ok">ตกลง</button>
+    </div>
+  </div>
+</div>
+
+<div id="tlline-overlay" class="confirm-overlay" style="display:none;">
+  <div class="confirm-box tlline-box">
+    <div class="confirm-msg">💬 สรุปแผนงานลงไลน์</div>
+    <div class="tlline-hint">ก๊อปข้อความด้านล่าง วางลงไลน์กลุ่มทีมได้เลย</div>
+    <textarea id="tlline-text" class="tlline-text" readonly rows="12"></textarea>
+    <div class="confirm-actions" style="flex-wrap:wrap;">
+      <button id="tlline-close-btn" class="confirm-btn cancel">ปิด</button>
+      <button id="tlline-copy-btn" class="confirm-btn ok">📋 คัดลอกข้อความ</button>
     </div>
   </div>
 </div>
@@ -6600,6 +6639,71 @@ function showPromptModal(title, placeholder, initial){
     input.addEventListener("keydown", onKey);
   });
 }
+
+function buildTlLineSummary(){
+  const proj = (typeof curTlProject === "function") ? curTlProject() : null;
+  const name = proj ? proj.name : "แผนงานออกบูธ";
+  const date = proj && proj.date ? proj.date : "";
+  const blocks = (typeof buildTimeline === "function") ? buildTimeline() : [];
+  let out = "📋 แผนงานออกบูธ — " + name + "\n";
+  if(date) out += "📅 " + date + "\n";
+  out += "━━━━━━━━━━━━━\n";
+  blocks.forEach(b => {
+    const t = String(b.time || "").trim();
+    const isClock = /^\s*\d{1,2}[:.]\d{2}/.test(t) || /^\s*[Hh][-+]?\d/.test(t);
+    const head = isClock ? ("⏰ " + t + "  " + b.title) : ("▫️ " + b.title);
+    out += "\n" + head + "\n";
+    (b.items || []).forEach(it => {
+      const label = String(it.label || "").replace(/\s+/g, " ").trim();
+      if(label) out += "   • " + label + "\n";
+    });
+  });
+  out += "\n━━━━━━━━━━━━━\n";
+  out += "✅ ขอให้ทุกคนเตรียมพร้อมและตรงเวลานะครับ 🙏";
+  return out;
+}
+function fallbackCopyTa(ta){
+  try{
+    ta.removeAttribute("readonly");
+    ta.focus(); ta.select(); ta.setSelectionRange(0, ta.value.length);
+    document.execCommand("copy");
+    ta.setAttribute("readonly", "readonly");
+  }catch(e){}
+}
+function openTlLineModal(){
+  const overlay = document.getElementById("tlline-overlay");
+  const ta = document.getElementById("tlline-text");
+  const closeBtn = document.getElementById("tlline-close-btn");
+  const copyBtn = document.getElementById("tlline-copy-btn");
+  if(!overlay || !ta) return;
+  ta.value = buildTlLineSummary();
+  overlay.style.display = "flex";
+  copyBtn.textContent = "📋 คัดลอกข้อความ";
+  function cleanup(){
+    overlay.style.display = "none";
+    closeBtn.removeEventListener("click", onClose);
+    copyBtn.removeEventListener("click", onCopy);
+    overlay.removeEventListener("click", onOverlay);
+  }
+  function onClose(){ cleanup(); }
+  function onOverlay(e){ if(e.target === overlay) cleanup(); }
+  function onCopy(){
+    const text = ta.value;
+    const done = ()=>{ copyBtn.textContent = "✓ คัดลอกแล้ว!"; };
+    try{
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text).then(done).catch(()=>{ fallbackCopyTa(ta); done(); });
+      } else { fallbackCopyTa(ta); done(); }
+    }catch(e){ fallbackCopyTa(ta); done(); }
+  }
+  closeBtn.addEventListener("click", onClose);
+  copyBtn.addEventListener("click", onCopy);
+  overlay.addEventListener("click", onOverlay);
+}
+(function wireTlLineBtn(){
+  const btn = document.getElementById("tl-line-btn");
+  if(btn && !btn._wired){ btn._wired = true; btn.addEventListener("click", openTlLineModal); }
+})();
 
 function showEventEditModal(ev){
   return new Promise((resolve)=>{
