@@ -3659,11 +3659,17 @@ let staff = [];
 let staffEvents = [];
 let currentStaffEventId = null;
 const STAFF_EVENTS_SEED = [
+  { id:"ev_nov19", name:"งานออกบูธ 19 พ.ย. (70 แก้ว)" },
   { id:"ev_seacon", name:"Seacon Bangkae (22 ก.ค.–2 ส.ค.)" },
   { id:"ev_taladchic", name:"Talad Chic (4 วัน)" },
   { id:"ev_training", name:"เทรนนิ่ง 30 ส.ค." },
   { id:"ev_scg2026", name:"SCG Dealer Communication 2026" }
 ];
+// งานเก่าที่ซ่อนไว้ในแท็บทีมงาน (เหลือเฉพาะงานกำลังจะมา) — ข้อมูลไม่ถูกลบ แค่ไม่แสดง
+const STAFF_EVENTS_HIDE = ["ev_seacon","ev_taladchic","ev_training","ev_scg2026"];
+function visibleStaffEvents(){ return staffEvents.filter(e => !STAFF_EVENTS_HIDE.includes(e.id)); }
+// วันจริงของงาน (สำหรับปุ่มลัดวันที่) — "เรียลทาม" ตามวันงานจริง
+const STAFF_EVENT_DATES = { ev_nov19: ["19 พ.ย. 69"] };
 function curStaff(){ return staff.filter(s => (s.eventId || "ev_seacon") === currentStaffEventId); }
 let staffRoster = [];
 const STAFF_ROSTER_KEY = "rangsan-booth-staff-roster-v1";
@@ -3771,7 +3777,10 @@ const STAFF_SEED_DATA = [
   { id:"st_scg2", eventId:"ev_scg2026", date:"30 ก.ย. 69", time:"08:00-16:00", name:"ปลายฝน ชัยสงคาม", role:"บาริสต้า", status:"pending" },
   { id:"st_scg3", eventId:"ev_scg2026", date:"30 ก.ย. 69", time:"08:00-16:00", name:"กิตติกวิน พลายด้วง", role:"บาริสต้า", status:"pending" },
   { id:"st_scg4", eventId:"ev_scg2026", date:"30 ก.ย. 69", time:"08:00-16:00", name:"ธนวัฒ ญาติมิ", role:"Editor (ถ่าย/ตัดต่อคอนเทนต์)", status:"pending" },
-  { id:"st_scg5", eventId:"ev_scg2026", date:"30 ก.ย. 69", time:"08:00-16:00", name:"ณัฐวุฒิ ไชยจันลา", role:"ผู้ควบคุมงาน (Job Controller)", status:"pending" }
+  { id:"st_scg5", eventId:"ev_scg2026", date:"30 ก.ย. 69", time:"08:00-16:00", name:"ณัฐวุฒิ ไชยจันลา", role:"ผู้ควบคุมงาน (Job Controller)", status:"pending" },
+  { id:"st_nov19_1", eventId:"ev_nov19", date:"19 พ.ย. 69", time:"10:30-16:00", name:"น้องหมวย", role:"บาริสต้า (สกัดกาแฟ)", status:"pending" },
+  { id:"st_nov19_2", eventId:"ev_nov19", date:"19 พ.ย. 69", time:"10:30-16:00", name:"น้องปลายฝน", role:"บาริสต้า (สกัดกาแฟ)", status:"pending" },
+  { id:"st_nov19_3", eventId:"ev_nov19", date:"19 พ.ย. 69", time:"10:30-16:00", name:"พี่น้ำแข็ง", role:"คนขับ / ถ่ายคอนเทนต์", status:"pending" }
 ];
 const STAFF_SEED_REMOVE_IDS = ["st_seed30","st_seed31","st_seed32","st_seed26"];
 
@@ -4915,7 +4924,7 @@ async function saveStaffEvents(){
 function renderStaffEvents(){
   const el = document.getElementById("staff-events-bar");
   if(!el) return;
-  el.innerHTML = staffEvents.map(ev => {
+  el.innerHTML = visibleStaffEvents().map(ev => {
     const n = staff.filter(s => (s.eventId||"ev_seacon") === ev.id).length;
     const active = ev.id === currentStaffEventId;
     return `<div class="staff-event-pill ${active?'active':''}" data-evpill="${ev.id}">
@@ -4995,10 +5004,13 @@ function renderStaffQuickDates(){
   const countByDate = {};
   curStaff().forEach(s => { countByDate[s.date] = (countByDate[s.date]||0)+1; });
   const di = document.getElementById("new-staff-date");
+  // เติมวันจริงของงานให้อัตโนมัติถ้าช่องยังว่าง (เรียลทามตามวันงาน)
+  const eventDates = STAFF_EVENT_DATES[currentStaffEventId] || EVENT_DATE_RANGE;
+  if(di && !di.value.trim() && eventDates.length === 1){ di.value = eventDates[0]; }
   const sel = (di && di.value.trim()) || "";
-  // date options: event range + any dates already used in this event
+  // date options: วันจริงของงาน + any dates already used in this event
   const used = [...new Set(curStaff().map(s=>s.date).filter(Boolean))];
-  const dates = [...new Set([...EVENT_DATE_RANGE, ...used])];
+  const dates = [...new Set([...eventDates, ...used])];
   el.innerHTML = dates.map(d => `
     <button class="staff-date-chip ${countByDate[d] ? 'has-people':''} ${d===sel?'sel':''}" data-quickdate="${d}">${d}${countByDate[d] ? ' ('+countByDate[d]+')':''}</button>
   `).join("");
@@ -5067,9 +5079,10 @@ function renderMenu(){
 function renderTeamReport(){
   const el = document.getElementById("team-report");
   if(!el) return;
-  // per-event: unique people with role + dates
-  const events = staffEvents.map(ev => {
-    const shifts = staff.filter(s => (s.eventId||"ev_seacon") === ev.id);
+  // per-event: unique people with role + dates (เฉพาะงานที่ยังแสดง)
+  const vstaff = staff.filter(s => !STAFF_EVENTS_HIDE.includes(s.eventId||"ev_seacon"));
+  const events = visibleStaffEvents().map(ev => {
+    const shifts = vstaff.filter(s => (s.eventId||"ev_seacon") === ev.id);
     const people = {};
     shifts.forEach(s => {
       if(!people[s.name]) people[s.name] = { role:"", dates:new Set() };
@@ -5081,14 +5094,14 @@ function renderTeamReport(){
   }).filter(e => e.nPeople > 0);
   // per-person across events (richer)
   const persons = {};
-  staff.forEach(s => {
+  vstaff.forEach(s => {
     if(!persons[s.name]) persons[s.name] = { events:new Set(), dates:new Set(), role:"" };
     const ev = staffEvents.find(e=>e.id===(s.eventId||"ev_seacon"));
     if(ev) persons[s.name].events.add(ev.name);
     if(s.date) persons[s.name].dates.add(s.date);
     if(s.role && !persons[s.name].role) persons[s.name].role = s.role;
   });
-  const allPeople = new Set(staff.map(s=>s.name)).size;
+  const allPeople = new Set(vstaff.map(s=>s.name)).size;
 
   if(!events.length){ el.innerHTML = '<div class="bdash-empty">ยังไม่มีข้อมูลทีมงาน</div>'; return; }
 
@@ -5096,7 +5109,7 @@ function renderTeamReport(){
   html += '<div class="tr-stats">'
     + '<div class="tr-stat"><b>' + events.length + '</b><span>งาน</span></div>'
     + '<div class="tr-stat"><b>' + allPeople + '</b><span>คน</span></div>'
-    + '<div class="tr-stat"><b>' + staff.length + '</b><span>กะรวม</span></div>'
+    + '<div class="tr-stat"><b>' + vstaff.length + '</b><span>กะรวม</span></div>'
     + '</div>';
 
   // per-event cards
@@ -6382,6 +6395,13 @@ async function loadAll(){
   }
   if(!currentStaffEventId || !staffEvents.some(e => e.id === currentStaffEventId)){
     currentStaffEventId = staffEvents[0].id; evChanged = true;
+  }
+  // โฟกัสงานกำลังจะมา: ถ้าค่าปัจจุบันเป็นงานที่ซ่อนไว้ ให้เด้งไปงานที่ยังแสดง (19 พ.ย.)
+  {
+    const vis = visibleStaffEvents();
+    if(vis.length && (STAFF_EVENTS_HIDE.includes(currentStaffEventId) || !vis.some(e => e.id === currentStaffEventId))){
+      currentStaffEventId = vis[0].id; evChanged = true;
+    }
   }
   let migratedEvent = false;
   staff.forEach(s => { if(!s.eventId){ s.eventId = "ev_seacon"; migratedEvent = true; } });
