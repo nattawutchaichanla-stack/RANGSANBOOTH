@@ -136,6 +136,8 @@ input:focus{outline:2px solid color-mix(in srgb, var(--sage) 45%, transparent); 
   border-radius:8px; padding:8px 14px; cursor:pointer; width:100%}
 .lib-load:hover{background:color-mix(in srgb, var(--terra) 8%, transparent)}
 .lib-empty{font-size:13px; color:var(--muted); text-align:center; padding:14px; background:var(--paper); border-radius:var(--r-sm)}
+.hist-section{margin:22px 0 8px; border-top:2px solid var(--line); padding-top:18px}
+.lib-time{font-size:11.5px; color:var(--muted); font-weight:500; margin-top:7px}
 
 /* Sticky result */
 .result{
@@ -206,6 +208,15 @@ input:focus{outline:2px solid color-mix(in srgb, var(--sage) 45%, transparent); 
     <div id="lib-list"></div>
   </div>
 
+  <div class="hist-section">
+    <div class="lib-head">
+      <div class="card-label" style="margin:0">📜 ประวัติของฉัน</div>
+      <button class="lib-refresh" id="hist-clear">🗑️ ล้างประวัติ</button>
+    </div>
+    <p class="lib-sub">เมนูที่คุณเคยคิดในเครื่องนี้ (เฉพาะคุณเห็น) — แตะเพื่อเปิดมาดูอีกครั้ง</p>
+    <div id="hist-list"></div>
+  </div>
+
   <p class="footer">เครื่องคิดต้นทุนเมนู · RANGSAN Coffee</p>
 </div>
 
@@ -226,8 +237,11 @@ input:focus{outline:2px solid color-mix(in srgb, var(--sage) 45%, transparent); 
   "use strict";
   var STORE_KEY = "rangsan-menu-cost-calc-v1";
   var LIB_CACHE = "rangsan-menucost-lib-cache-v1";
+  var HIST_KEY = "rangsan-menucost-history-v1";
   var state = { menu:"", sell:"", deliv:"", gp:"", ings:[] };
   var loadedId = null;
+  var histId = null;
+  var history = [];
 
   // ---- ที่เก็บกลาง (Supabase kv_store · scope "shared" — ตัวเดียวกับแอปหลัก) ----
   var SB_URL = "https://zewveugjulahoonigthb.supabase.co";
@@ -269,6 +283,7 @@ input:focus{outline:2px solid color-mix(in srgb, var(--sage) 45%, transparent); 
           state.gp = p.gp || "";
           state.ings = Array.isArray(p.ings) && p.ings.length ? p.ings : [blankIng()];
           loadedId = p.loadedId || null;
+          histId = p.histId || null;
           return;
         }
       }
@@ -277,7 +292,7 @@ input:focus{outline:2px solid color-mix(in srgb, var(--sage) 45%, transparent); 
     state.ings = [blankIng(), blankIng()];
   }
   function save(){
-    try{ localStorage.setItem(STORE_KEY, JSON.stringify(Object.assign({}, state, { loadedId:loadedId }))); }catch(e){}
+    try{ localStorage.setItem(STORE_KEY, JSON.stringify(Object.assign({}, state, { loadedId:loadedId, histId:histId }))); }catch(e){}
   }
 
   function num(v){ var n = parseFloat(v); return isNaN(n) ? 0 : n; }
@@ -353,6 +368,7 @@ input:focus{outline:2px solid color-mix(in srgb, var(--sage) 45%, transparent); 
     else { ln.classList.remove("show"); }
 
     document.getElementById("rt-menu").textContent = state.menu ? state.menu : "";
+    if(typeof scheduleHistory === "function") scheduleHistory();
   }
   function setChannel(prefix, price, profit, margin, extra){
     var box = document.getElementById(prefix+"-box");
@@ -404,6 +420,7 @@ input:focus{outline:2px solid color-mix(in srgb, var(--sage) 45%, transparent); 
   document.getElementById("reset-btn").addEventListener("click", function(){
     if(!confirm("ล้างข้อมูลทั้งหมดและเริ่มคิดเมนูใหม่?")) return;
     state = { menu:"", sell:"", deliv:"", gp:"", ings:[blankIng(), blankIng()] };
+    loadedId = null; histId = null;
     document.getElementById("menu-name").value = "";
     document.getElementById("sell-price").value = "";
     document.getElementById("deliv-price").value = "";
@@ -489,7 +506,7 @@ input:focus{outline:2px solid color-mix(in srgb, var(--sage) 45%, transparent); 
     var m = lib.find(function(x){ return x.id===id; });
     if(!m) return;
     state = { menu:m.name||"", sell:m.sell||"", deliv:m.deliv||"", gp:m.gp||"", ings:(m.ings&&m.ings.length)?JSON.parse(JSON.stringify(m.ings)):[blankIng()] };
-    loadedId = m.id;
+    loadedId = m.id; histId = null;
     document.getElementById("menu-name").value = state.menu;
     document.getElementById("sell-price").value = state.sell;
     document.getElementById("deliv-price").value = state.deliv;
@@ -507,6 +524,85 @@ input:focus{outline:2px solid color-mix(in srgb, var(--sage) 45%, transparent); 
   var saveBtn = document.getElementById("save-btn"); if(saveBtn) saveBtn.addEventListener("click", saveToLib);
   var refBtn = document.getElementById("lib-refresh"); if(refBtn) refBtn.addEventListener("click", loadLib);
 
+  // ---- ประวัติของฉัน (เฉพาะเครื่องนี้ · localStorage) ----
+  var histEl = document.getElementById("hist-list");
+  function loadHistory(){ try{ var r=localStorage.getItem(HIST_KEY); if(r){ var a=JSON.parse(r); if(Array.isArray(a)) history=a; } }catch(e){} }
+  function saveHistory(){ try{ localStorage.setItem(HIST_KEY, JSON.stringify(history)); }catch(e){} }
+  var _histTimer=null;
+  function scheduleHistory(){ clearTimeout(_histTimer); _histTimer=setTimeout(recordHistory, 1500); }
+  function hasContent(){
+    if(!state.menu || !state.menu.trim()) return false;
+    var hasIng=(state.ings||[]).some(function(it){ return (it.name&&it.name.trim()) || num(it.buyPrice)>0; });
+    return hasIng || num(state.sell)>0 || num(state.deliv)>0;
+  }
+  function recordHistory(){
+    if(!hasContent()) return;
+    if(!histId) histId="h"+Date.now();
+    var obj={ id:histId, name:state.menu, sell:state.sell, deliv:state.deliv, gp:state.gp, ings:JSON.parse(JSON.stringify(state.ings)), ts:Date.now() };
+    var idx=history.findIndex(function(x){ return x.id===histId; });
+    if(idx>=0) history[idx]=obj; else history.push(obj);
+    if(history.length>30) history=history.slice(history.length-30);
+    saveHistory(); save(); renderHistory();
+  }
+  function fmtTime(ts){
+    try{ var d=new Date(ts), now=new Date();
+      var sameDay=d.toDateString()===now.toDateString();
+      var hh=("0"+d.getHours()).slice(-2), mm=("0"+d.getMinutes()).slice(-2);
+      return (sameDay?"วันนี้ ":(d.getDate()+"/"+(d.getMonth()+1)+" "))+hh+":"+mm;
+    }catch(e){ return ""; }
+  }
+  function renderHistory(){
+    if(!histEl) return;
+    if(!history.length){ histEl.innerHTML='<div class="lib-empty">ยังไม่มีประวัติ — เริ่มคิดต้นทุนเมนู แล้วจะถูกบันทึกให้อัตโนมัติ</div>'; return; }
+    histEl.innerHTML="";
+    history.slice().reverse().forEach(function(m){
+      var t=computeTotals(m);
+      var sTxt=t.sell>0?("🏪 "+(t.sProfit<0?"-":"")+"฿"+Math.round(Math.abs(t.sProfit))+(t.sMargin!=null?" ("+Math.round(t.sMargin)+"%)":"")):"";
+      var dTxt=t.deliv>0?("🛵 "+(t.dProfit<0?"-":"")+"฿"+Math.round(Math.abs(t.dProfit))+(t.dMargin!=null?" ("+Math.round(t.dMargin)+"%)":"")):"";
+      var card=document.createElement("div"); card.className="lib-card";
+      card.innerHTML=
+        '<div class="lib-card-top"><div class="lib-name">'+esc(m.name||"(ไม่มีชื่อ)")+'</div>'+
+        '<button class="lib-del" data-histdel="'+esc(m.id)+'" title="ลบ">✕</button></div>'+
+        '<div class="lib-figs">'+
+          '<span class="lib-fig cost">ต้นทุน ฿'+t.total.toFixed(2)+'</span>'+
+          (sTxt?'<span class="lib-fig store'+(t.sProfit<0?' neg':'')+'">'+sTxt+'</span>':'')+
+          (dTxt?'<span class="lib-fig deliv'+(t.dProfit<0?' neg':'')+'">'+dTxt+'</span>':'')+
+        '</div>'+
+        '<div class="lib-time">🕒 '+fmtTime(m.ts)+'</div>'+
+        '<button class="lib-load" data-histload="'+esc(m.id)+'">↑ เปิดเมนูนี้มาดู/แก้</button>';
+      histEl.appendChild(card);
+    });
+  }
+  function openHistItem(id){
+    var m=history.find(function(x){ return x.id===id; });
+    if(!m) return;
+    state={ menu:m.name||"", sell:m.sell||"", deliv:m.deliv||"", gp:m.gp||"", ings:(m.ings&&m.ings.length)?JSON.parse(JSON.stringify(m.ings)):[blankIng()] };
+    loadedId=null; histId=m.id;
+    document.getElementById("menu-name").value=state.menu;
+    document.getElementById("sell-price").value=state.sell;
+    document.getElementById("deliv-price").value=state.deliv;
+    document.getElementById("deliv-gp").value=state.gp;
+    renderList(); recalc(); save();
+    try{ window.scrollTo({ top:0, behavior:"smooth" }); }catch(e){ window.scrollTo(0,0); }
+  }
+  function deleteHist(id){
+    history=history.filter(function(x){ return x.id!==id; });
+    if(histId===id) histId=null;
+    saveHistory(); save(); renderHistory();
+  }
+  if(histEl){
+    histEl.addEventListener("click", function(e){
+      var del=e.target.getAttribute("data-histdel"); if(del){ deleteHist(del); return; }
+      var ld=e.target.getAttribute("data-histload"); if(ld){ openHistItem(ld); return; }
+    });
+  }
+  var histClear=document.getElementById("hist-clear");
+  if(histClear) histClear.addEventListener("click", function(){
+    if(!history.length) return;
+    if(!confirm("ล้างประวัติทั้งหมดในเครื่องนี้?")) return;
+    history=[]; histId=null; saveHistory(); save(); renderHistory();
+  });
+
   // init
   load();
   document.getElementById("menu-name").value = state.menu;
@@ -515,6 +611,8 @@ input:focus{outline:2px solid color-mix(in srgb, var(--sage) 45%, transparent); 
   document.getElementById("deliv-gp").value = state.gp;
   renderList();
   recalc();
+  loadHistory();
+  renderHistory();
   loadLib();
 })();
 </script>
