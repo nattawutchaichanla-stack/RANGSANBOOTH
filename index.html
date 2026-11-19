@@ -4321,7 +4321,8 @@ function wireSectionsDelegation(){
     if((t = e.target.closest("[data-check]"))){
       const id = t.dataset.check;
       checked[id] = !checked[id];
-      saveChecked();
+      pendingChecks.add(id);
+      schedulePushChecks();
       const row = t.closest(".cl-row");
       if(row){
         row.classList.toggle("checked", !!checked[id]);
@@ -4645,6 +4646,87 @@ async function setStorageWithRetry(key, value, label){
 
 async function saveChecked(){
   await setStorageWithRetry(CHECKED_KEY, JSON.stringify(checked), "เช็คลิสต์");
+}
+
+// ===== ซิงค์เช็คลิสต์แบบเรียลไทม์ (ทุกคนเห็นตรงกัน) =====
+let pendingChecks = new Set();
+let _pushTimer = null;
+let _syncingChecks = false;
+let _lastCustomJson = null;
+function schedulePushChecks(){ clearTimeout(_pushTimer); _pushTimer = setTimeout(pushChecks, 600); }
+function applyCheckedToDOM(){
+  const container = document.getElementById("sections");
+  if(!container) return;
+  container.querySelectorAll("[data-check]").forEach(el=>{
+    const id = el.dataset.check;
+    const row = el.closest(".cl-row");
+    if(row) row.classList.toggle("checked", !!checked[id]);
+    const box = row && row.querySelector(".cl-done-box");
+    if(box) box.classList.toggle("on", !!checked[id]);
+  });
+  container.querySelectorAll(".section").forEach(secEl=>{
+    const total = secEl.querySelectorAll(".cl-row").length;
+    const done = secEl.querySelectorAll(".cl-row.checked").length;
+    const cnt = secEl.querySelector(".section-count");
+    if(cnt) cnt.textContent = done + "/" + total;
+    const head = secEl.querySelector(".section-head.doc");
+    if(head) head.classList.toggle("done", total>0 && done===total);
+  });
+  try{ updateProgress(); }catch(e){}
+}
+// ติ๊กแล้ว: ดึงของกลางล่าสุด merge กับที่เราติ๊ก แล้วค่อยเซฟ (ไม่ทับของคนอื่น)
+async function pushChecks(){
+  if(_syncingChecks){ schedulePushChecks(); return; }
+  _syncingChecks = true;
+  try{
+    let remote = {};
+    try{ const r = await window.storage.get(CHECKED_KEY, true); if(r && r.value) remote = JSON.parse(r.value) || {}; }
+    catch(e){ if(!(e && e.notFound)) remote = Object.assign({}, checked); }
+    pendingChecks.forEach(id => { remote[id] = checked[id]; });
+    pendingChecks.clear();
+    const changed = JSON.stringify(remote) !== JSON.stringify(checked);
+    checked = remote;
+    await setStorageWithRetry(CHECKED_KEY, JSON.stringify(checked), "เช็คลิสต์");
+    if(changed) applyCheckedToDOM();
+  } finally { _syncingChecks = false; }
+}
+// ดึงของกลางล่าสุดมาอัปเดต (ถ้าไม่มีติ๊กค้างที่ยังไม่เซฟ)
+async function pullChecklistShared(){
+  if(_syncingChecks || pendingChecks.size) return;
+  // 1) สถานะติ๊ก
+  try{
+    const r = await window.storage.get(CHECKED_KEY, true);
+    const remote = (r && r.value) ? (JSON.parse(r.value) || {}) : {};
+    if(JSON.stringify(remote) !== JSON.stringify(checked)){
+      checked = remote;
+      applyCheckedToDOM();
+    }
+  }catch(e){}
+  // 2) รายการที่เพิ่ม/ลบ (custom) — รีเรนเดอร์เฉพาะเมื่อเปลี่ยน และไม่มีช่องกรอกที่กำลังพิมพ์
+  try{
+    const r2 = await window.storage.get(CUSTOM_KEY, true);
+    const cj = r2 && r2.value ? r2.value : null;
+    if(cj && _lastCustomJson !== null && cj !== _lastCustomJson){
+      const ae = document.activeElement;
+      const typing = ae && (ae.tagName === "INPUT" || ae.tagName === "TEXTAREA");
+      if(!typing){
+        try{ custom = JSON.parse(cj); }catch(e){}
+        _lastCustomJson = cj;
+        renderSections();
+      }
+    } else if(cj && _lastCustomJson === null){
+      _lastCustomJson = cj;
+    }
+  }catch(e){}
+}
+let _checklistSyncStarted = false;
+function startChecklistSync(){
+  if(_checklistSyncStarted) return;
+  _checklistSyncStarted = true;
+  try{ _lastCustomJson = JSON.stringify(custom); }catch(e){ _lastCustomJson = null; }
+  setInterval(pullChecklistShared, 12000);
+  document.addEventListener("visibilitychange", ()=>{ if(!document.hidden) pullChecklistShared(); });
+  window.addEventListener("focus", pullChecklistShared);
 }
 async function saveCustom(){
   await setStorageWithRetry(CUSTOM_KEY, JSON.stringify(custom), "รายการที่เพิ่มเอง");
@@ -6722,6 +6804,7 @@ function renderAll(){
   try{ populateSurvey(); wireSurvey(); }catch(e){ console.warn("survey",e); }
   try{ renderTodos(); wireTodoForm(); }catch(e){}
   try{ updateSyncTime(); }catch(e){}
+  try{ startChecklistSync(); }catch(e){}
 }
 function loadAllSafe(){
   return loadAll().catch(e=>console.warn("loadAll failed, rendering from local:",e))
