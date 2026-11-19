@@ -193,15 +193,15 @@ input:focus{outline:2px solid color-mix(in srgb, var(--sage) 45%, transparent); 
   <div id="ing-list"></div>
   <button class="add-btn" id="add-ing">➕ เพิ่มวัตถุดิบ</button>
 
-  <button class="save-btn" id="save-btn">💾 บันทึกเมนูนี้เข้าส่วนกลาง</button>
+  <button class="save-btn" id="save-btn">💾 บันทึกเมนู</button>
   <div class="reset-row"><button class="reset-btn" id="reset-btn">ล้างทั้งหมด เริ่มคิดเมนูใหม่</button></div>
 
   <div class="lib-section">
     <div class="lib-head">
-      <div class="card-label" style="margin:0">📋 เมนูที่บันทึกไว้ · ส่วนกลาง</div>
+      <div class="card-label" style="margin:0">📋 เมนูที่บันทึกไว้</div>
       <button class="lib-refresh" id="lib-refresh">🔄 รีเฟรช</button>
     </div>
-    <p class="lib-sub">บันทึกเข้าศูนย์กลางร่วมกัน — ทุกคนที่เปิดหน้านี้เห็นเหมือนกัน</p>
+    <p class="lib-sub">เมนูที่บันทึกไว้ทั้งหมด แตะเพื่อเปิดมาดู/แก้</p>
     <div class="lib-status" id="lib-status">กำลังโหลด…</div>
     <div id="lib-list"></div>
   </div>
@@ -429,7 +429,7 @@ input:focus{outline:2px solid color-mix(in srgb, var(--sage) 45%, transparent); 
 
   function renderLib(){
     if(!libEl) return;
-    if(!lib.length){ libEl.innerHTML = '<div class="lib-empty">ยังไม่มีเมนูที่บันทึกไว้ — คิดต้นทุนแล้วกด “บันทึกเข้าส่วนกลาง”</div>'; return; }
+    if(!lib.length){ libEl.innerHTML = '<div class="lib-empty">ยังไม่มีเมนูที่บันทึกไว้ — คิดต้นทุนแล้วกด “บันทึกเมนู”</div>'; return; }
     libEl.innerHTML = "";
     lib.slice().reverse().forEach(function(m){
       var t = computeTotals(m);
@@ -453,10 +453,10 @@ input:focus{outline:2px solid color-mix(in srgb, var(--sage) 45%, transparent); 
     setStatus("กำลังโหลด…", false);
     getLibRemote().then(function(arr){
       lib = arr; cacheLib(); renderLib();
-      setStatus(lib.length ? ("มี "+lib.length+" เมนู · ส่วนกลาง (ทุกคนเห็นเหมือนกัน)") : "ยังไม่มีเมนูบันทึกไว้", false);
+      setStatus(lib.length ? ("มี "+lib.length+" เมนูที่บันทึกไว้") : "ยังไม่มีเมนูบันทึกไว้", false);
     }).catch(function(){
       loadCache(); renderLib();
-      setStatus("โหลดจากส่วนกลางไม่ได้ตอนนี้ — แสดงที่เคยโหลด (เช็กเน็ตแล้วกดรีเฟรช)", true);
+      setStatus("โหลดไม่ได้ตอนนี้ — แสดงที่เคยโหลด (เช็กเน็ตแล้วกดรีเฟรช)", true);
     });
   }
   function saveToLib(){
@@ -469,20 +469,20 @@ input:focus{outline:2px solid color-mix(in srgb, var(--sage) 45%, transparent); 
       if(idx>=0) arr[idx] = obj; else arr.push(obj);
       return setLibRemote(arr).then(function(){ lib = arr; loadedId = obj.id; cacheLib(); save(); });
     }).then(function(){
-      renderLib(); setStatus("มี "+lib.length+" เมนู · ส่วนกลาง (ทุกคนเห็นเหมือนกัน)", false);
-      btn.textContent = "✓ บันทึกเข้าส่วนกลางแล้ว"; btn.classList.add("saved");
-      setTimeout(function(){ btn.textContent = "💾 บันทึกเมนูนี้เข้าส่วนกลาง"; btn.classList.remove("saved"); }, 1800);
+      renderLib(); setStatus("มี "+lib.length+" เมนูที่บันทึกไว้", false);
+      btn.textContent = "✓ บันทึกแล้ว"; btn.classList.add("saved");
+      setTimeout(function(){ btn.textContent = "💾 บันทึกเมนู"; btn.classList.remove("saved"); }, 1800);
     }).catch(function(){
-      btn.textContent = "💾 บันทึกเมนูนี้เข้าส่วนกลาง";
+      btn.textContent = "💾 บันทึกเมนู";
       setStatus("บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง (เช็กเน็ต)", true);
     });
   }
   function deleteFromLib(id){
-    if(!confirm("ลบเมนูนี้ออกจากส่วนกลาง? ทุกคนจะไม่เห็นเมนูนี้")) return;
+    if(!confirm("ลบเมนูนี้?")) return;
     getLibRemote().catch(function(){ return lib.slice(); }).then(function(arr){
       arr = arr.filter(function(x){ return x.id !== id; });
       return setLibRemote(arr).then(function(){ lib = arr; cacheLib(); });
-    }).then(function(){ if(loadedId===id){ loadedId=null; save(); } renderLib(); setStatus("มี "+lib.length+" เมนู · ส่วนกลาง", false); })
+    }).then(function(){ if(loadedId===id){ loadedId=null; save(); } renderLib(); setStatus("มี "+lib.length+" เมนูที่บันทึกไว้", false); })
     .catch(function(){ setStatus("ลบไม่สำเร็จ ลองใหม่", true); });
   }
   function openMenu(id){
@@ -496,7 +496,7 @@ input:focus{outline:2px solid color-mix(in srgb, var(--sage) 45%, transparent); 
     document.getElementById("deliv-gp").value = state.gp;
     renderList(); recalc(); save();
     try{ window.scrollTo({ top:0, behavior:"smooth" }); }catch(e){ window.scrollTo(0,0); }
-    setStatus('เปิดเมนู “'+(m.name||"")+'” มาแก้ไข — แก้แล้วกดบันทึกเพื่ออัปเดตส่วนกลาง', false);
+    setStatus('เปิดเมนู “'+(m.name||"")+'” มาแก้ไข — แก้แล้วกดบันทึกอีกครั้ง', false);
   }
   if(libEl){
     libEl.addEventListener("click", function(e){
