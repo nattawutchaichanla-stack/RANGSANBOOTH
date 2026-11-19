@@ -3573,6 +3573,7 @@ const TL_TALADCHIC_BLOCKS = [
 const TL_SCG2026_SEED_KEY = "rangsan-booth-tl-scg2026-seeded-v1";
 const TL_SCGBEWELL_SEED_KEY = "rangsan-booth-tl-scgbewell-seeded-v1";
 const TL_NOV19_SEED_KEY = "rangsan-booth-tl-nov19-seeded-v5";
+const TL_NOV23_SEED_KEY = "rangsan-booth-tl-nov23-seeded-v1";
 const TL_SCG2026_BLOCKS = [
   { id:"scg26_setup", time:"09:00", title:"Set up · เข้าจัดร้าน",
     items:[
@@ -3721,7 +3722,66 @@ const TL_NOV19_BLOCKS = [
       {id:"n19_i7", label:"⚠️ รอยืนยัน: ชื่องาน/สถานที่ (ข้อความ)"}
     ]}
 ];
+const TL_NOV23_BLOCKS = [
+  { id:"n23_load", time:"05:30", title:"โหลดของขึ้นรถ · ออกเดินทาง",
+    items:[
+      {id:"n23_l1", label:"เช็กอุปกรณ์ตามเช็คลิสต์ก่อนขนขึ้นรถ (เครื่องชง/บด/ปลั๊กพ่วง/วัตถุดิบ)"},
+      {id:"n23_l2", label:"เตรียมวัตถุดิบ 6 เมนูให้พอ 180 แก้ว + เผื่อ (งานใหญ่ เผื่อให้มาก)"},
+      {id:"n23_l3", label:"เช็กสต๊อกของที่จะใช้ แบ่งไปให้พอ 180 แก้ว (แก้ว · ฝา · หลอด · ของใช้)"},
+      {id:"n23_l4", label:"ออกเดินทางแต่เช้า — เสิร์ฟ 07:30 ต้องถึงก่อนเพื่อเซ็ตอัพ"}
+    ]},
+  { id:"n23_setup", time:"06:00", title:"ถึงอาคาร SCG ฝั่งใต้ · ติดตั้งบูธ",
+    items:[
+      {id:"n23_s1", label:"ขนของลง + ตรวจตำแหน่งบูธกับผู้ประสานงาน SCG"},
+      {id:"n23_s2", label:"ต่อปลั๊กพ่วง ทดสอบไฟก่อนตั้งเครื่องชง · สายไฟไม่กีดขวางทางเดิน"},
+      {id:"n23_s3", label:"เตรียมน้ำแข็ง/น้ำ + จุดทิ้งของเสีย"}
+    ]},
+  { id:"n23_prep", time:"06:45", title:"ตกแต่ง · เตรียมพร้อมขาย",
+    items:[
+      {id:"n23_p1", label:"ติดป้ายเมนู/แบรนด์ + จัดแก้ว ฝา หลอด ทิชชู่"},
+      {id:"n23_p2", label:"วางวัตถุดิบ 6 เมนู: เมกาโน่ · ลาเต้ · ชาไทยไม้มลาย · มัทฉะลาเต้ · เพียวมัทฉะ · โกโก้เข้มข้น"},
+      {id:"n23_p3", label:"ตั้งค่าบด (เมกาโน่ = Maew Blow คั่วกลาง + Amethyst Rum คั่วอ่อน) + ชิมตัวอย่างก่อนเปิด"},
+      {id:"n23_p4", label:"บรีฟทีมแบ่งหน้าที่ (งาน 180 แก้ว ช่วงเช้าแน่น) + ถ่ายรูปบูธก่อนเริ่ม"}
+    ]},
+  { id:"n23_open", time:"07:30", title:"⭐ OPEN — เริ่มเสิร์ฟ 07:30",
+    items:[
+      {id:"n23_o1", label:"เริ่มเสิร์ฟตามเวลา — ช่วง 07:30–09:00 คนเยอะสุด เตรียมทีมให้พร้อม"},
+      {id:"n23_o2", label:"จด/กดนับจำนวนแก้วทุกออเดอร์ (เป้า 180 แก้ว)"},
+      {id:"n23_o3", label:"เติมน้ำแข็ง นม แก้ว ฝา หลอด ให้พอตลอด"},
+      {id:"n23_o4", label:"ถ่ายคอนเทนต์: ทีมชง ลูกค้า หน้าบูธ เมนูขายดี"}
+    ]},
+  { id:"n23_stock", time:"10:30", title:"เช็กสต๊อกกลางงาน",
+    items:[
+      {id:"n23_sk1", label:"นับแก้วที่เสิร์ฟแล้ว + เทียบเป้า 180"},
+      {id:"n23_sk2", label:"แจ้งทีมเมนูที่วัตถุดิบใกล้หมด เติมให้ทันช่วงท้าย"}
+    ]},
+  { id:"n23_close", time:"13:00", title:"CLOSE — จบงาน 13:00 · เก็บบูธ",
+    items:[
+      {id:"n23_c1", label:"ปิดเสิร์ฟ + นับจำนวนแก้วจริงทั้งหมด"},
+      {id:"n23_c2", label:"ล้างอุปกรณ์ชง + ปิดเครื่อง + ถอดปลั๊กเก็บสายไฟ"},
+      {id:"n23_c3", label:"เก็บวัตถุดิบ + เช็ดโต๊ะ/เคาน์เตอร์ + เก็บขยะ + ตรวจพื้นที่ก่อนคืน"},
+      {id:"n23_c4", label:"ถ่ายรูปหลังเก็บ + ขนขึ้นรถ + เช็กจำนวนกล่อง/อุปกรณ์"}
+    ]},
+  { id:"n23_pay", time:"การเงิน", title:"💵 การชำระเงิน (Catering)",
+    items:[
+      {id:"n23_pm1", label:"ยอดรวม 14,000 บาท (180 แก้ว)"},
+      {id:"n23_pm2", label:"มัดจำ 50% = 7,000 บาท (ยืนยันจอง/ล็อกคิว)"},
+      {id:"n23_pm3", label:"คงเหลือ 50% = 7,000 บาท"},
+      {id:"n23_pm4", label:"ลูกค้าโอนมัดจำ + ส่งสลิปให้แอดมินยืนยันจอง"}
+    ]},
+  { id:"n23_info", time:"ข้อมูล", title:"รายละเอียดงาน",
+    items:[
+      {id:"n23_i1", label:"วันจันทร์ที่ 23 พฤศจิกายน 2569"},
+      {id:"n23_i2", label:"Coffee Catering · 180 แก้ว · ราคาสุทธิ 14,000 บาท"},
+      {id:"n23_i3", label:"สถานที่: อาคาร SCG ฝั่งใต้"},
+      {id:"n23_i4", label:"เวลาให้บริการ 07:30 – 13:00 น."},
+      {id:"n23_i5", label:"เมนู 6: เมกาโน่ (Maew Blow/Amethyst Rum) · ลาเต้ · ชาไทยไม้มลาย · มัทฉะลาเต้ · เพียวมัทฉะ · โกโก้เข้มข้น"},
+      {id:"n23_i6", label:"อุปกรณ์: เตรียมตามเช็คลิสต์ในแอป ก่อนขนขึ้นรถ"},
+      {id:"n23_i7", label:"⚠️ รอระบุ: ทีมงานที่ไป"}
+    ]}
+];
 const TL_PROJECTS_SEED = [
+  { id:"tl_nov23", name:"Coffee Catering · SCG ฝั่งใต้ (180 แก้ว)", date:"23 พ.ย. 2569", archived:false },
   { id:"tl_nov19", name:"งานออกบูธ 19 พ.ย. (70 แก้ว)", date:"19 พ.ย. 2569", archived:false },
   { id:"tl_scgbewell", name:"SCG BEWELL & HEALTHY CLUB (70 แก้ว)", date:"10 ก.ค. 2569", archived:false },
   { id:"tl_seacon", name:"Seacon Bangkae · เซ็ตอัพ", date:"22 ก.ค. – 2 ส.ค. 2569", archived:false },
@@ -3752,6 +3812,7 @@ let staff = [];
 let staffEvents = [];
 let currentStaffEventId = null;
 const STAFF_EVENTS_SEED = [
+  { id:"ev_nov23", name:"Coffee Catering · SCG ฝั่งใต้ (180 แก้ว)" },
   { id:"ev_nov19", name:"งานออกบูธ 19 พ.ย. (70 แก้ว)" },
   { id:"ev_seacon", name:"Seacon Bangkae (22 ก.ค.–2 ส.ค.)" },
   { id:"ev_taladchic", name:"Talad Chic (4 วัน)" },
@@ -3759,10 +3820,10 @@ const STAFF_EVENTS_SEED = [
   { id:"ev_scg2026", name:"SCG Dealer Communication 2026" }
 ];
 // งานเก่าที่ซ่อนไว้ในแท็บทีมงาน (เหลือเฉพาะงานกำลังจะมา) — ข้อมูลไม่ถูกลบ แค่ไม่แสดง
-const STAFF_EVENTS_HIDE = ["ev_seacon","ev_taladchic","ev_training","ev_scg2026"];
+const STAFF_EVENTS_HIDE = ["ev_nov19","ev_seacon","ev_taladchic","ev_training","ev_scg2026"];
 function visibleStaffEvents(){ return staffEvents.filter(e => !STAFF_EVENTS_HIDE.includes(e.id)); }
 // วันจริงของงาน (สำหรับปุ่มลัดวันที่) — "เรียลทาม" ตามวันงานจริง
-const STAFF_EVENT_DATES = { ev_nov19: ["19 พ.ย. 69"] };
+const STAFF_EVENT_DATES = { ev_nov19: ["19 พ.ย. 69"], ev_nov23: ["23 พ.ย. 69"] };
 function curStaff(){ return staff.filter(s => (s.eventId || "ev_seacon") === currentStaffEventId); }
 let staffRoster = [];
 const STAFF_ROSTER_KEY = "rangsan-booth-staff-roster-v1";
@@ -6589,6 +6650,16 @@ async function loadAll(){
     tlChanged = true;
     try{ await window.storage.set(TL_NOV19_SEED_KEY, "done", true); }catch(e){}
     if(currentTlProjectId === "tl_nov19") tlCustom = tlDataAll["tl_nov19"];
+  }
+  // seed Coffee Catering · SCG ฝั่งใต้ 23 พ.ย. once
+  let n23Seeded = false;
+  try{ const rs23 = await window.storage.get(TL_NOV23_SEED_KEY, true); n23Seeded = rs23 && rs23.value === "done"; }catch(e){ n23Seeded = false; }
+  if(!n23Seeded){
+    if(!tlDataAll["tl_nov23"]) tlDataAll["tl_nov23"] = emptyTlData();
+    tlDataAll["tl_nov23"].customBlocks = JSON.parse(JSON.stringify(TL_NOV23_BLOCKS));
+    tlChanged = true;
+    try{ await window.storage.set(TL_NOV23_SEED_KEY, "done", true); }catch(e){}
+    if(currentTlProjectId === "tl_nov23") tlCustom = tlDataAll["tl_nov23"];
   }
   if(tlChanged){ await saveTlProjects(); await saveTlCustom(); }
   try{
