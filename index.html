@@ -2047,6 +2047,42 @@
     .tl-line-btn{ width:100%; padding:11px 18px; font-size:15px; }
     .tlline-box{ width:calc(100vw - 32px); max-width:460px; }
   }
+  /* ---- Menu: editable cost + add new ---- */
+  .menu-toolbar{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin:0 0 16px; }
+  .menu-add-btn{
+    font-family:'Sarabun',sans-serif; font-size:14px; font-weight:700; color:#fff;
+    background:var(--terra); border:none; cursor:pointer; border-radius:999px;
+    padding:10px 18px; box-shadow:var(--shadow-sm); transition:transform .12s, background .15s;
+  }
+  .menu-add-btn:hover{ transform:translateY(-1px); background:var(--terra-deep,#A84F2C); }
+  .menu-toolbar-hint{ font-size:12.5px; color:var(--muted); }
+  .menu-usertag{ font-size:11px; font-weight:600; color:var(--terra); background:rgba(194,103,63,0.12);
+    border-radius:6px; padding:1px 6px; margin-left:6px; vertical-align:middle; }
+  .menu-card.custom{ border-left:3px solid var(--terra); }
+  .menu-edit{ background:var(--paper); border:1px solid rgba(28,27,25,0.10); border-radius:var(--radius-sm);
+    padding:12px 13px; margin:0 0 12px; }
+  .menu-edit-title{ font-size:13px; font-weight:700; color:var(--ink); margin:0 0 9px; }
+  .menu-edit-row{ display:flex; gap:10px; flex-wrap:wrap; }
+  .menu-edit-row label{ flex:1; min-width:120px; display:flex; flex-direction:column; gap:4px;
+    font-size:12px; color:var(--muted); font-weight:600; }
+  .menu-inp, .menuadd-inp{
+    font-family:'Sarabun',sans-serif; font-size:16px; color:var(--ink);
+    border:1px solid rgba(28,27,25,0.16); border-radius:8px; background:var(--card);
+    padding:9px 11px; width:100%; box-sizing:border-box;
+  }
+  .menu-inp:focus, .menuadd-inp:focus{ outline:2px solid var(--sage-soft,#cdd8c4); border-color:var(--sage,#5B6B52); }
+  .menu-edit-result{ margin-top:10px; font-size:14px; color:var(--sage-dark,#47553F); font-weight:600; }
+  .menu-edit-result b{ color:var(--ink); }
+  .menu-del-btn{ margin-top:12px; font-family:'Sarabun',sans-serif; font-size:13px; font-weight:600;
+    color:#b4443a; background:rgba(180,68,58,0.08); border:1px solid rgba(180,68,58,0.25);
+    border-radius:8px; padding:8px 14px; cursor:pointer; }
+  .menu-del-btn:hover{ background:rgba(180,68,58,0.15); }
+  /* add-menu modal */
+  .menuadd-box{ text-align:left; width:calc(100vw - 32px); max-width:440px; }
+  .menuadd-fields{ display:flex; flex-direction:column; gap:11px; margin:6px 0 4px; }
+  .menuadd-label{ display:flex; flex-direction:column; gap:4px; font-size:12px; color:var(--muted); font-weight:600; }
+  .menuadd-row2{ display:flex; gap:10px; }
+  .menuadd-row2 .menuadd-label{ flex:1; }
 </style>
 </head>
 <body>
@@ -2920,6 +2956,26 @@
     <div class="confirm-actions">
       <button id="prompt-cancel-btn" class="confirm-btn cancel">ยกเลิก</button>
       <button id="prompt-ok-btn" class="confirm-btn ok">ตกลง</button>
+    </div>
+  </div>
+</div>
+
+<div id="menuadd-overlay" class="confirm-overlay" style="display:none;">
+  <div class="confirm-box menuadd-box">
+    <div class="confirm-msg">➕ เพิ่มเมนูใหม่</div>
+    <div class="menuadd-fields">
+      <label class="menuadd-label">ชื่อเมนู<input id="ma-name" class="menuadd-inp" placeholder="เช่น ชาเขียวมะลิ เย็น"></label>
+      <label class="menuadd-label">ชื่ออังกฤษ (ถ้ามี)<input id="ma-nameen" class="menuadd-inp" placeholder="เช่น Jasmine Green Tea"></label>
+      <label class="menuadd-label">หมวด (ถ้ามี)<input id="ma-cat" class="menuadd-inp" placeholder="เช่น TEA MENU — เว้นว่างได้"></label>
+      <div class="menuadd-row2">
+        <label class="menuadd-label">ราคาขาย ฿<input id="ma-price" type="number" inputmode="decimal" class="menuadd-inp" placeholder="65"></label>
+        <label class="menuadd-label">ต้นทุน/แก้ว ฿<input id="ma-cost" type="number" inputmode="decimal" class="menuadd-inp" placeholder="18"></label>
+      </div>
+      <div class="menu-edit-result" id="ma-result">ใส่ราคาและต้นทุนเพื่อคิดกำไร</div>
+    </div>
+    <div class="confirm-actions">
+      <button id="ma-cancel" class="confirm-btn cancel">ยกเลิก</button>
+      <button id="ma-save" class="confirm-btn ok">เพิ่มเมนู</button>
     </div>
   </div>
 </div>
@@ -3836,6 +3892,24 @@ const MENU_DATA = [
   { category:"SPECIAL MENU", name:"19. อเมริกาโน่ โคลอมเบีย", nameEn:"Colombia Americano", price:85, cost:null, profit:null,
     steps:["ใช้เมล็ดกาแฟโคลัมเบีย"], variants:[] }
 ];
+MENU_DATA.forEach((m,i)=>{ m.id = "mb"+i; });
+// ---- เมนูที่แก้ราคา/ต้นทุนได้ + เมนูใหม่ที่เพิ่มเอง (บันทึกถาวร) ----
+const MENU_KEY = "rangsan-booth-menu-custom-v1";
+let menuCustom = { prices:{}, costs:{}, added:[], removedAdded:[] };
+function saveMenuCustom(){
+  try{ localStorage.setItem(MENU_KEY, JSON.stringify(menuCustom)); }catch(e){}
+  try{ return setStorageWithRetry(MENU_KEY, JSON.stringify(menuCustom), "เมนู"); }catch(e){ return Promise.resolve(); }
+}
+function effMenuPrice(it){ const p = menuCustom.prices[it.id]; return (p!=null && p!=="") ? Number(p) : it.price; }
+function effMenuCost(it){ const c = menuCustom.costs[it.id]; return (c!=null && c!=="") ? Number(c) : it.cost; }
+function effMenuProfit(it){ const p = effMenuPrice(it), c = effMenuCost(it); return (p!=null && c!=null) ? (p - c) : null; }
+function getMenuList(){
+  const base = MENU_DATA.map(m=>({...m}));
+  const added = (menuCustom.added||[])
+    .filter(a => !(menuCustom.removedAdded||[]).includes(a.id))
+    .map(a => ({ id:a.id, category:a.category||"เมนูใหม่ของฉัน", name:a.name, nameEn:a.nameEn||"", price:a.price, cost:a.cost, steps:a.steps||[], variants:a.variants||[], custom:true }));
+  return base.concat(added);
+}
 const SALES_SEED_DATA = [
   { id:"sl_v15_1",  name:"อเมริกาโน่ Americano",                       qty:44, price:60,  cost:13.69, total:2640, totalCost:602.16 },
   { id:"sl_v15_2",  name:"เอสเพรสโซ่ Espresso",                        qty:15, price:65,  cost:13.71 },
@@ -5023,56 +5097,176 @@ function renderStaffQuickDates(){
   });
 }
 
+function menuFiguresHtml(item){
+  const price = effMenuPrice(item);
+  const cost = effMenuCost(item);
+  const profit = effMenuProfit(item);
+  const margin = (profit!=null && price) ? Math.round(profit/price*100) : null;
+  return `<span class="menu-figure price" id="mf-price-${item.id}">฿${price==null?'—':price}</span>`
+    + `<span class="menu-figure cost" id="mf-cost-${item.id}">ต้นทุน ${cost==null?'รอระบุ':'฿'+Number(cost).toFixed(2)}</span>`
+    + `<span class="menu-figure profit" id="mf-profit-${item.id}">กำไร ${profit==null?'รอระบุ':'฿'+profit.toFixed(2)+(margin!=null?' ('+margin+'%)':'')}</span>`;
+}
+function updateMenuCardFigures(id){
+  const list = getMenuList();
+  const item = list.find(m=>m.id===id);
+  if(!item) return;
+  const price = effMenuPrice(item), cost = effMenuCost(item), profit = effMenuProfit(item);
+  const margin = (profit!=null && price) ? Math.round(profit/price*100) : null;
+  const pe = document.getElementById("mf-price-"+id); if(pe) pe.textContent = "฿"+(price==null?'—':price);
+  const ce = document.getElementById("mf-cost-"+id); if(ce) ce.textContent = "ต้นทุน "+(cost==null?'รอระบุ':'฿'+Number(cost).toFixed(2));
+  const fe = document.getElementById("mf-profit-"+id); if(fe) fe.textContent = "กำไร "+(profit==null?'รอระบุ':'฿'+profit.toFixed(2)+(margin!=null?' ('+margin+'%)':''));
+  const re = document.getElementById("mres-"+id);
+  if(re) re.innerHTML = profit==null ? 'ใส่ราคาและต้นทุนเพื่อคิดกำไร' : `กำไร/แก้ว <b>฿${profit.toFixed(2)}</b>${margin!=null?` · อัตรากำไร <b>${margin}%</b>`:''}`;
+}
 function renderMenu(){
   const el = document.getElementById("menu-list");
   if(!el) return;
 
+  const list = getMenuList();
   const byCategory = {};
   const catOrder = [];
-  MENU_DATA.forEach(item => {
+  list.forEach(item => {
     if(!byCategory[item.category]){ byCategory[item.category] = []; catOrder.push(item.category); }
     byCategory[item.category].push(item);
   });
 
-  el.innerHTML = catOrder.map(cat => `
-    <div class="menu-cat-title">${cat}</div>
-    ${byCategory[cat].map((item, idx) => {
-      const menuId = `menu-${cat}-${idx}`.replace(/[^a-zA-Z0-9-]/g,"");
+  const toolbar = `<div class="menu-toolbar">
+    <button class="menu-add-btn" id="menu-add-btn">➕ เพิ่มเมนูใหม่</button>
+    <span class="menu-toolbar-hint">แตะเมนูเพื่อแก้ราคา/ต้นทุน — กำไรคิดให้อัตโนมัติ</span>
+  </div>`;
+
+  el.innerHTML = toolbar + catOrder.map(cat => `
+    <div class="menu-cat-title">${escapeHtml(cat)}</div>
+    ${byCategory[cat].map((item) => {
+      const price = effMenuPrice(item);
+      const cost = effMenuCost(item);
       return `
-      <div class="menu-card">
-        <div class="menu-card-head" data-menutoggle="${menuId}">
+      <div class="menu-card${item.custom?' custom':''}">
+        <div class="menu-card-head" data-menutoggle="${item.id}">
           <div class="menu-card-titles">
-            <div class="menu-card-name">${item.name}</div>
-            <div class="menu-card-nameen">${item.nameEn}</div>
+            <div class="menu-card-name">${escapeHtml(item.name)}${item.custom?' <span class="menu-usertag">เพิ่มเอง</span>':''}</div>
+            <div class="menu-card-nameen">${escapeHtml(item.nameEn||'')}</div>
           </div>
-          <div class="menu-card-figures">
-            <span class="menu-figure price">฿${item.price}</span>
-            <span class="menu-figure cost">ต้นทุน ${item.cost == null ? 'รอระบุ' : '฿'+item.cost.toFixed(2)}</span>
-            <span class="menu-figure profit">กำไร ${item.profit == null ? 'รอระบุ' : '฿'+item.profit.toFixed(2)}</span>
-          </div>
+          <div class="menu-card-figures">${menuFiguresHtml(item)}</div>
           <span class="menu-chev">▾</span>
         </div>
-        <div class="menu-card-body" id="${menuId}" style="display:none;">
-          <div class="menu-steps-title">ขั้นตอนการทำ</div>
-          <ul class="menu-steps">${item.steps.map(s => `<li>${s}</li>`).join("")}</ul>
-          ${item.variants.length ? `
+        <div class="menu-card-body" id="${item.id}" style="display:none;">
+          <div class="menu-edit">
+            <div class="menu-edit-title">💰 ราคา & ต้นทุน</div>
+            <div class="menu-edit-row">
+              <label>ราคาขาย ฿<input type="number" inputmode="decimal" class="menu-inp" data-mprice="${item.id}" value="${price==null?'':price}" placeholder="เช่น 65"></label>
+              <label>ต้นทุน/แก้ว ฿<input type="number" inputmode="decimal" class="menu-inp" data-mcost="${item.id}" value="${cost==null?'':cost}" placeholder="เช่น 18"></label>
+            </div>
+            <div class="menu-edit-result" id="mres-${item.id}"></div>
+            ${item.custom?`<button class="menu-del-btn" data-mdel="${item.id}">🗑️ ลบเมนูนี้</button>`:''}
+          </div>
+          ${(item.steps&&item.steps.length)?`
+            <div class="menu-steps-title">ขั้นตอนการทำ</div>
+            <ul class="menu-steps">${item.steps.map(s => `<li>${escapeHtml(s)}</li>`).join("")}</ul>`:''}
+          ${(item.variants&&item.variants.length)?`
             <div class="menu-steps-title">ตัวเลือกความหวาน</div>
-            <ul class="menu-variants">${item.variants.map(v => `<li>${v}</li>`).join("")}</ul>
-          ` : ''}
+            <ul class="menu-variants">${item.variants.map(v => `<li>${escapeHtml(v)}</li>`).join("")}</ul>`:''}
         </div>
       </div>
     `;}).join("")}
   `).join("");
 
   el.querySelectorAll("[data-menutoggle]").forEach(head=>{
-    head.addEventListener("click", ()=>{
+    head.addEventListener("click", (e)=>{
+      if(e.target.closest(".menu-inp, .menu-del-btn")) return;
       const body = document.getElementById(head.dataset.menutoggle);
       const chev = head.querySelector(".menu-chev");
       const collapsed = body.style.display === "none";
       body.style.display = collapsed ? "block" : "none";
       chev.style.transform = collapsed ? "rotate(0deg)" : "rotate(-90deg)";
+      if(collapsed) updateMenuCardFigures(head.dataset.menutoggle);
     });
   });
+  // แก้ราคา/ต้นทุน → คิดกำไรอัตโนมัติ + บันทึก
+  el.querySelectorAll("[data-mprice]").forEach(inp=>{
+    inp.addEventListener("input", ()=>{
+      const id = inp.dataset.mprice; const v = inp.value.trim();
+      if(v==="") delete menuCustom.prices[id]; else menuCustom.prices[id] = Number(v);
+      updateMenuCardFigures(id); saveMenuCustom();
+    });
+  });
+  el.querySelectorAll("[data-mcost]").forEach(inp=>{
+    inp.addEventListener("input", ()=>{
+      const id = inp.dataset.mcost; const v = inp.value.trim();
+      if(v==="") delete menuCustom.costs[id]; else menuCustom.costs[id] = Number(v);
+      updateMenuCardFigures(id); saveMenuCustom();
+    });
+  });
+  el.querySelectorAll("[data-mdel]").forEach(btn=>{
+    btn.addEventListener("click", async ()=>{
+      const id = btn.dataset.mdel;
+      const ok = await showConfirmModal("ลบเมนูนี้ออกจากรายการ?");
+      if(!ok) return;
+      menuCustom.added = (menuCustom.added||[]).filter(a=>a.id!==id);
+      if(!menuCustom.removedAdded) menuCustom.removedAdded = [];
+      if(!menuCustom.removedAdded.includes(id)) menuCustom.removedAdded.push(id);
+      await saveMenuCustom(); renderMenu();
+    });
+  });
+  const addBtn = document.getElementById("menu-add-btn");
+  if(addBtn) addBtn.addEventListener("click", openMenuAddModal);
+  // แสดงผลกำไรในการ์ดที่เปิดอยู่
+  list.forEach(m=>updateMenuCardFigures(m.id));
+}
+
+function openMenuAddModal(){
+  const overlay = document.getElementById("menuadd-overlay");
+  if(!overlay) return;
+  const f = {
+    name: document.getElementById("ma-name"),
+    nameen: document.getElementById("ma-nameen"),
+    cat: document.getElementById("ma-cat"),
+    price: document.getElementById("ma-price"),
+    cost: document.getElementById("ma-cost"),
+    result: document.getElementById("ma-result")
+  };
+  f.name.value=""; f.nameen.value=""; f.cat.value=""; f.price.value=""; f.cost.value="";
+  f.result.innerHTML = "ใส่ราคาและต้นทุนเพื่อคิดกำไร";
+  overlay.style.display = "flex";
+  function calc(){
+    const p = parseFloat(f.price.value), c = parseFloat(f.cost.value);
+    if(!isNaN(p) && !isNaN(c)){
+      const profit = p - c; const margin = p ? Math.round(profit/p*100) : null;
+      f.result.innerHTML = `กำไร/แก้ว <b>฿${profit.toFixed(2)}</b>${margin!=null?` · อัตรากำไร <b>${margin}%</b>`:''}`;
+    } else { f.result.innerHTML = "ใส่ราคาและต้นทุนเพื่อคิดกำไร"; }
+  }
+  const cancelBtn = document.getElementById("ma-cancel");
+  const saveBtn = document.getElementById("ma-save");
+  function cleanup(){
+    overlay.style.display = "none";
+    f.price.removeEventListener("input", calc); f.cost.removeEventListener("input", calc);
+    cancelBtn.removeEventListener("click", onCancel); saveBtn.removeEventListener("click", onSave);
+    overlay.removeEventListener("click", onOverlay);
+  }
+  function onCancel(){ cleanup(); }
+  function onOverlay(e){ if(e.target===overlay) cleanup(); }
+  async function onSave(){
+    const name = f.name.value.trim();
+    if(!name){ f.name.focus(); f.name.style.borderColor = "var(--terra)"; return; }
+    const p = parseFloat(f.price.value), c = parseFloat(f.cost.value);
+    const item = {
+      id: "mu" + Date.now(),
+      category: f.cat.value.trim() || "เมนูใหม่ของฉัน",
+      name: name,
+      nameEn: f.nameen.value.trim(),
+      price: isNaN(p) ? null : p,
+      cost: isNaN(c) ? null : c,
+      steps: [], variants: []
+    };
+    if(!menuCustom.added) menuCustom.added = [];
+    menuCustom.added.push(item);
+    await saveMenuCustom();
+    cleanup();
+    renderMenu();
+  }
+  f.price.addEventListener("input", calc); f.cost.addEventListener("input", calc);
+  cancelBtn.addEventListener("click", onCancel); saveBtn.addEventListener("click", onSave);
+  overlay.addEventListener("click", onOverlay);
 }
 
 
@@ -6333,6 +6527,17 @@ async function loadAll(){
     if(res9 && res9.value) todos = JSON.parse(res9.value);
     else { todos = TODOS_SEED.map(t=>({...t})); await saveTodos(); }
   }catch(e){ todos = todos.length ? todos : TODOS_SEED.map(t=>({...t})); }
+  try{
+    const resMenu = await window.storage.get(MENU_KEY, true);
+    if(resMenu && resMenu.value){
+      const mc = JSON.parse(resMenu.value);
+      menuCustom = {
+        prices: mc.prices || {}, costs: mc.costs || {},
+        added: Array.isArray(mc.added) ? mc.added : [],
+        removedAdded: Array.isArray(mc.removedAdded) ? mc.removedAdded : []
+      };
+    }
+  }catch(e){ /* keep default menuCustom */ }
   try{
     const res7 = await window.storage.get(STAFF_KEY, true);
     if(res7 && res7.value){
