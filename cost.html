@@ -100,9 +100,42 @@ input:focus{outline:2px solid color-mix(in srgb, var(--sage) 45%, transparent); 
 
 .hint{font-size:12.5px; color:var(--muted); margin:2px 0 14px; line-height:1.5}
 
+.save-btn{
+  width:100%; margin:14px 0 4px; font-family:"Sarabun",sans-serif; font-size:15px; font-weight:700;
+  color:#fff; background:var(--terra); border:none; border-radius:var(--r-sm); padding:14px;
+  cursor:pointer; box-shadow:var(--sh); transition:transform .12s, background .15s;
+}
+.save-btn:hover{ transform:translateY(-1px); background:var(--terra-deep); }
+.save-btn:active{ transform:translateY(0); }
+.save-btn.saved{ background:var(--sage-deep); }
 .reset-row{display:flex; justify-content:center; margin:4px 0 8px}
 .reset-btn{font-family:"Sarabun",sans-serif; font-size:13px; font-weight:600; color:var(--muted);
   background:transparent; border:none; cursor:pointer; text-decoration:underline; text-underline-offset:3px}
+/* shared library */
+.lib-section{margin:20px 0 8px; border-top:2px solid var(--line); padding-top:18px}
+.lib-head{display:flex; align-items:center; justify-content:space-between; gap:10px}
+.lib-refresh{font-family:"Sarabun",sans-serif; font-size:12.5px; font-weight:600; color:var(--muted);
+  background:var(--paper-2); border:1px solid var(--line); border-radius:999px; padding:6px 12px; cursor:pointer}
+.lib-sub{font-size:12.5px; color:var(--muted); margin:6px 0 10px}
+.lib-status{font-size:13px; color:var(--muted); margin:0 0 10px}
+.lib-status.err{color:var(--loss)}
+.lib-card{background:var(--card); border:1px solid var(--line); border-radius:var(--r-sm); box-shadow:var(--sh);
+  padding:13px 14px; margin:0 0 10px}
+.lib-card-top{display:flex; align-items:flex-start; justify-content:space-between; gap:10px}
+.lib-name{font-weight:700; font-size:15px; color:var(--ink); line-height:1.3}
+.lib-del{flex:0 0 auto; width:30px; height:30px; border-radius:8px; border:1px solid var(--line);
+  background:var(--paper); color:var(--loss); font-size:14px; cursor:pointer; line-height:1}
+.lib-figs{display:flex; flex-wrap:wrap; gap:7px; margin:10px 0 0}
+.lib-fig{font-size:12.5px; font-weight:600; border-radius:7px; padding:4px 9px; background:var(--paper)}
+.lib-fig.cost{color:var(--ink)}
+.lib-fig.store{color:var(--sage-deep); background:color-mix(in srgb, var(--sage) 14%, transparent)}
+.lib-fig.deliv{color:var(--terra-deep); background:color-mix(in srgb, var(--terra) 12%, transparent)}
+.lib-fig.neg{color:var(--loss)!important; background:color-mix(in srgb, var(--loss) 12%, transparent)}
+.lib-load{margin-top:11px; font-family:"Sarabun",sans-serif; font-size:13px; font-weight:600;
+  color:var(--terra-deep); background:transparent; border:1px solid color-mix(in srgb, var(--terra) 40%, transparent);
+  border-radius:8px; padding:8px 14px; cursor:pointer; width:100%}
+.lib-load:hover{background:color-mix(in srgb, var(--terra) 8%, transparent)}
+.lib-empty{font-size:13px; color:var(--muted); text-align:center; padding:14px; background:var(--paper); border-radius:var(--r-sm)}
 
 /* Sticky result */
 .result{
@@ -160,7 +193,18 @@ input:focus{outline:2px solid color-mix(in srgb, var(--sage) 45%, transparent); 
   <div id="ing-list"></div>
   <button class="add-btn" id="add-ing">➕ เพิ่มวัตถุดิบ</button>
 
+  <button class="save-btn" id="save-btn">💾 บันทึกเมนูนี้เข้าส่วนกลาง</button>
   <div class="reset-row"><button class="reset-btn" id="reset-btn">ล้างทั้งหมด เริ่มคิดเมนูใหม่</button></div>
+
+  <div class="lib-section">
+    <div class="lib-head">
+      <div class="card-label" style="margin:0">📋 เมนูที่บันทึกไว้ · ส่วนกลาง</div>
+      <button class="lib-refresh" id="lib-refresh">🔄 รีเฟรช</button>
+    </div>
+    <p class="lib-sub">บันทึกเข้าศูนย์กลางร่วมกัน — ทุกคนที่เปิดหน้านี้เห็นเหมือนกัน</p>
+    <div class="lib-status" id="lib-status">กำลังโหลด…</div>
+    <div id="lib-list"></div>
+  </div>
 
   <p class="footer">เครื่องคิดต้นทุนเมนู · RANGSAN Coffee</p>
 </div>
@@ -181,7 +225,34 @@ input:focus{outline:2px solid color-mix(in srgb, var(--sage) 45%, transparent); 
 (function(){
   "use strict";
   var STORE_KEY = "rangsan-menu-cost-calc-v1";
+  var LIB_CACHE = "rangsan-menucost-lib-cache-v1";
   var state = { menu:"", sell:"", deliv:"", gp:"", ings:[] };
+  var loadedId = null;
+
+  // ---- ที่เก็บกลาง (Supabase kv_store · scope "shared" — ตัวเดียวกับแอปหลัก) ----
+  var SB_URL = "https://zewveugjulahoonigthb.supabase.co";
+  var SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpld3ZldWdqdWxhaG9vbmlndGhiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1NzI4OTEsImV4cCI6MjEwNjE0ODg5MX0.QmYfLzEi6sJ-WIPdaQuSnQ-1MKhaWbQnRPAAskMKvWA";
+  var LIB_SCOPE = "shared", LIB_KEY_NAME = "menucost-library";
+  function sbHead(){ return { "apikey":SB_KEY, "Authorization":"Bearer "+SB_KEY }; }
+  function sbFetch(url, opts, ms){
+    var ctrl = new AbortController();
+    var t = setTimeout(function(){ ctrl.abort(); }, ms||8000);
+    return fetch(url, Object.assign({}, opts||{}, { signal:ctrl.signal })).finally(function(){ clearTimeout(t); });
+  }
+  function getLibRemote(){
+    var url = SB_URL + "/rest/v1/kv_store?scope=eq."+encodeURIComponent(LIB_SCOPE)+"&key=eq."+encodeURIComponent(LIB_KEY_NAME)+"&select=value";
+    return sbFetch(url, { headers:sbHead() }).then(function(r){ if(!r.ok) throw new Error("get "+r.status); return r.json(); }).then(function(rows){
+      if(!rows.length) return [];
+      var v = rows[0].value;
+      if(Array.isArray(v)) return v;
+      try{ var a = JSON.parse(v); return Array.isArray(a) ? a : []; }catch(e){ return []; }
+    });
+  }
+  function setLibRemote(arr){
+    var url = SB_URL + "/rest/v1/kv_store?on_conflict=scope,key";
+    return sbFetch(url, { method:"POST", headers:Object.assign({}, sbHead(), { "Content-Type":"application/json", "Prefer":"resolution=merge-duplicates,return=minimal" }), body:JSON.stringify([{ scope:LIB_SCOPE, key:LIB_KEY_NAME, value:JSON.stringify(arr) }]) })
+      .then(function(r){ if(!r.ok) throw new Error("set "+r.status); return true; });
+  }
 
   function uid(){ return "i" + Date.now() + Math.floor(Math.random()*1000); }
   function blankIng(){ return { id:uid(), name:"", buyPrice:"", buySize:"", unit:"", use:"" }; }
@@ -197,6 +268,7 @@ input:focus{outline:2px solid color-mix(in srgb, var(--sage) 45%, transparent); 
           state.deliv = p.deliv || "";
           state.gp = p.gp || "";
           state.ings = Array.isArray(p.ings) && p.ings.length ? p.ings : [blankIng()];
+          loadedId = p.loadedId || null;
           return;
         }
       }
@@ -205,7 +277,7 @@ input:focus{outline:2px solid color-mix(in srgb, var(--sage) 45%, transparent); 
     state.ings = [blankIng(), blankIng()];
   }
   function save(){
-    try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){}
+    try{ localStorage.setItem(STORE_KEY, JSON.stringify(Object.assign({}, state, { loadedId:loadedId }))); }catch(e){}
   }
 
   function num(v){ var n = parseFloat(v); return isNaN(n) ? 0 : n; }
@@ -339,6 +411,102 @@ input:focus{outline:2px solid color-mix(in srgb, var(--sage) 45%, transparent); 
     renderList(); recalc(); save();
   });
 
+  // ---- shared library (ส่วนกลาง) ----
+  function computeTotals(m){
+    var total = 0;
+    (m.ings||[]).forEach(function(it){ total += ingCost(it); });
+    var sell = num(m.sell), deliv = num(m.deliv), gp = num(m.gp);
+    var sProfit = sell - total, sMargin = sell>0 ? sProfit/sell*100 : null;
+    var dReceive = deliv - (deliv*gp/100), dProfit = dReceive - total, dMargin = deliv>0 ? dProfit/deliv*100 : null;
+    return { total:total, sell:sell, deliv:deliv, sProfit:sProfit, sMargin:sMargin, dProfit:dProfit, dMargin:dMargin };
+  }
+  var lib = [];
+  var libEl = document.getElementById("lib-list");
+  var libStatus = document.getElementById("lib-status");
+  function setStatus(msg, err){ if(!libStatus) return; libStatus.textContent = msg; libStatus.classList.toggle("err", !!err); }
+  function cacheLib(){ try{ localStorage.setItem(LIB_CACHE, JSON.stringify(lib)); }catch(e){} }
+  function loadCache(){ try{ var r=localStorage.getItem(LIB_CACHE); if(r){ var a=JSON.parse(r); if(Array.isArray(a)) lib=a; } }catch(e){} }
+
+  function renderLib(){
+    if(!libEl) return;
+    if(!lib.length){ libEl.innerHTML = '<div class="lib-empty">ยังไม่มีเมนูที่บันทึกไว้ — คิดต้นทุนแล้วกด “บันทึกเข้าส่วนกลาง”</div>'; return; }
+    libEl.innerHTML = "";
+    lib.slice().reverse().forEach(function(m){
+      var t = computeTotals(m);
+      var sTxt = t.sell>0 ? ("🏪 "+(t.sProfit<0?"-":"")+"฿"+Math.round(Math.abs(t.sProfit))+(t.sMargin!=null?" ("+Math.round(t.sMargin)+"%)":"")) : "";
+      var dTxt = t.deliv>0 ? ("🛵 "+(t.dProfit<0?"-":"")+"฿"+Math.round(Math.abs(t.dProfit))+(t.dMargin!=null?" ("+Math.round(t.dMargin)+"%)":"")) : "";
+      var card = document.createElement("div");
+      card.className = "lib-card";
+      card.innerHTML =
+        '<div class="lib-card-top"><div class="lib-name">'+esc(m.name||"(ไม่มีชื่อ)")+'</div>'+
+        '<button class="lib-del" data-libdel="'+esc(m.id)+'" title="ลบ">✕</button></div>'+
+        '<div class="lib-figs">'+
+          '<span class="lib-fig cost">ต้นทุน ฿'+t.total.toFixed(2)+'</span>'+
+          (sTxt?'<span class="lib-fig store'+(t.sProfit<0?' neg':'')+'">'+sTxt+'</span>':'')+
+          (dTxt?'<span class="lib-fig deliv'+(t.dProfit<0?' neg':'')+'">'+dTxt+'</span>':'')+
+        '</div>'+
+        '<button class="lib-load" data-libload="'+esc(m.id)+'">↑ เปิดเมนูนี้มาดู/แก้</button>';
+      libEl.appendChild(card);
+    });
+  }
+  function loadLib(){
+    setStatus("กำลังโหลด…", false);
+    getLibRemote().then(function(arr){
+      lib = arr; cacheLib(); renderLib();
+      setStatus(lib.length ? ("มี "+lib.length+" เมนู · ส่วนกลาง (ทุกคนเห็นเหมือนกัน)") : "ยังไม่มีเมนูบันทึกไว้", false);
+    }).catch(function(){
+      loadCache(); renderLib();
+      setStatus("โหลดจากส่วนกลางไม่ได้ตอนนี้ — แสดงที่เคยโหลด (เช็กเน็ตแล้วกดรีเฟรช)", true);
+    });
+  }
+  function saveToLib(){
+    var btn = document.getElementById("save-btn");
+    if(!state.menu || !state.menu.trim()){ document.getElementById("menu-name").focus(); setStatus("ใส่ชื่อเมนูก่อนบันทึก", true); return; }
+    var obj = { id: loadedId || ("m"+Date.now()), name:state.menu, sell:state.sell, deliv:state.deliv, gp:state.gp, ings:JSON.parse(JSON.stringify(state.ings)), ts:Date.now() };
+    btn.textContent = "กำลังบันทึก…";
+    getLibRemote().catch(function(){ return lib.slice(); }).then(function(arr){
+      var idx = arr.findIndex(function(x){ return x.id === obj.id; });
+      if(idx>=0) arr[idx] = obj; else arr.push(obj);
+      return setLibRemote(arr).then(function(){ lib = arr; loadedId = obj.id; cacheLib(); save(); });
+    }).then(function(){
+      renderLib(); setStatus("มี "+lib.length+" เมนู · ส่วนกลาง (ทุกคนเห็นเหมือนกัน)", false);
+      btn.textContent = "✓ บันทึกเข้าส่วนกลางแล้ว"; btn.classList.add("saved");
+      setTimeout(function(){ btn.textContent = "💾 บันทึกเมนูนี้เข้าส่วนกลาง"; btn.classList.remove("saved"); }, 1800);
+    }).catch(function(){
+      btn.textContent = "💾 บันทึกเมนูนี้เข้าส่วนกลาง";
+      setStatus("บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง (เช็กเน็ต)", true);
+    });
+  }
+  function deleteFromLib(id){
+    if(!confirm("ลบเมนูนี้ออกจากส่วนกลาง? ทุกคนจะไม่เห็นเมนูนี้")) return;
+    getLibRemote().catch(function(){ return lib.slice(); }).then(function(arr){
+      arr = arr.filter(function(x){ return x.id !== id; });
+      return setLibRemote(arr).then(function(){ lib = arr; cacheLib(); });
+    }).then(function(){ if(loadedId===id){ loadedId=null; save(); } renderLib(); setStatus("มี "+lib.length+" เมนู · ส่วนกลาง", false); })
+    .catch(function(){ setStatus("ลบไม่สำเร็จ ลองใหม่", true); });
+  }
+  function openMenu(id){
+    var m = lib.find(function(x){ return x.id===id; });
+    if(!m) return;
+    state = { menu:m.name||"", sell:m.sell||"", deliv:m.deliv||"", gp:m.gp||"", ings:(m.ings&&m.ings.length)?JSON.parse(JSON.stringify(m.ings)):[blankIng()] };
+    loadedId = m.id;
+    document.getElementById("menu-name").value = state.menu;
+    document.getElementById("sell-price").value = state.sell;
+    document.getElementById("deliv-price").value = state.deliv;
+    document.getElementById("deliv-gp").value = state.gp;
+    renderList(); recalc(); save();
+    try{ window.scrollTo({ top:0, behavior:"smooth" }); }catch(e){ window.scrollTo(0,0); }
+    setStatus('เปิดเมนู “'+(m.name||"")+'” มาแก้ไข — แก้แล้วกดบันทึกเพื่ออัปเดตส่วนกลาง', false);
+  }
+  if(libEl){
+    libEl.addEventListener("click", function(e){
+      var del = e.target.getAttribute("data-libdel"); if(del){ deleteFromLib(del); return; }
+      var ld = e.target.getAttribute("data-libload"); if(ld){ openMenu(ld); return; }
+    });
+  }
+  var saveBtn = document.getElementById("save-btn"); if(saveBtn) saveBtn.addEventListener("click", saveToLib);
+  var refBtn = document.getElementById("lib-refresh"); if(refBtn) refBtn.addEventListener("click", loadLib);
+
   // init
   load();
   document.getElementById("menu-name").value = state.menu;
@@ -347,6 +515,7 @@ input:focus{outline:2px solid color-mix(in srgb, var(--sage) 45%, transparent); 
   document.getElementById("deliv-gp").value = state.gp;
   renderList();
   recalc();
+  loadLib();
 })();
 </script>
 </body>
