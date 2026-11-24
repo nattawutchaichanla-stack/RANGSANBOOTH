@@ -2107,6 +2107,61 @@
   .menuadd-label{ display:flex; flex-direction:column; gap:4px; font-size:12px; color:var(--muted); font-weight:600; }
   .menuadd-row2{ display:flex; gap:10px; }
   .menuadd-row2 .menuadd-label{ flex:1; }
+  /* ===== เช็คสต๊อกต่องาน ===== */
+  .stk-intro{ font-size:13.5px; color:var(--muted); line-height:1.5; margin:0 0 14px; }
+  .stk-events{ display:flex; gap:8px; overflow-x:auto; padding:2px 0 10px; -webkit-overflow-scrolling:touch; }
+  .stk-event{ flex:0 0 auto; font-family:'Sarabun',sans-serif; font-size:13.5px; font-weight:600;
+    color:var(--ink); background:var(--card); border:1px solid rgba(28,27,25,0.12); border-radius:999px;
+    padding:8px 15px; cursor:pointer; white-space:nowrap; }
+  .stk-event.on{ background:var(--sage); color:#fff; border-color:var(--sage); }
+  .stk-event .stk-ev-date{ opacity:.7; font-weight:400; margin-left:5px; font-size:12px; }
+  .stk-bar{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:space-between; margin:4px 0 16px; }
+  .stk-progress{ font-size:14px; font-weight:700; color:var(--sage-dark); }
+  .stk-progress b{ color:var(--ink); }
+  .stk-actions{ display:flex; gap:8px; flex-wrap:wrap; }
+  .stk-btn{ font-family:'Sarabun',sans-serif; font-size:13px; font-weight:700; cursor:pointer;
+    color:#fff; background:var(--sage-dark); border:none; border-radius:999px; padding:8px 14px; box-shadow:var(--shadow-sm); }
+  .stk-btn:hover{ background:var(--sage); }
+  .stk-btn.ghost{ color:var(--muted); background:transparent; border:1px solid rgba(28,27,25,0.14); box-shadow:none; }
+  .stk-btn.ghost:hover{ background:rgba(28,27,25,0.05); color:var(--ink); }
+  .stk-card{ background:var(--card); border:1px solid rgba(28,27,25,0.09); border-radius:var(--radius-sm);
+    box-shadow:var(--shadow-sm); padding:12px 13px; margin:0 0 10px; }
+  .stk-card.packed{ background:color-mix(in srgb, var(--sage) 9%, var(--card)); border-color:rgba(92,122,95,0.35); }
+  .stk-top{ display:flex; align-items:center; gap:10px; }
+  .stk-check{ flex:0 0 auto; width:26px; height:26px; border-radius:7px; border:2px solid rgba(28,27,25,0.22);
+    background:var(--paper); cursor:pointer; display:flex; align-items:center; justify-content:center;
+    font-size:15px; color:#fff; line-height:1; }
+  .stk-check.on{ background:var(--sage); border-color:var(--sage); }
+  .stk-name{ flex:1; min-width:0; font-size:15px; font-weight:600; color:var(--ink); }
+  .stk-card.packed .stk-name{ color:var(--sage-dark); }
+  .stk-del{ flex:0 0 auto; width:30px; height:30px; border-radius:8px; border:1px solid rgba(28,27,25,0.12);
+    background:var(--paper); color:#b4443a; font-size:14px; cursor:pointer; line-height:1; }
+  .stk-fields{ display:grid; grid-template-columns:1fr 1fr; gap:9px; margin:11px 0 0; }
+  .stk-field{ display:flex; flex-direction:column; gap:4px; }
+  .stk-field.note{ grid-column:1 / -1; }
+  .stk-field > span{ font-size:11.5px; color:var(--muted); font-weight:600; }
+  .stk-inp{ font-family:'Sarabun',sans-serif; font-size:16px; color:var(--ink);
+    border:1px solid rgba(28,27,25,0.15); border-radius:9px; background:var(--paper); padding:9px 11px; width:100%; box-sizing:border-box; }
+  .stk-inp:focus{ outline:2px solid color-mix(in srgb, var(--sage) 40%, transparent); border-color:var(--sage); }
+  .stk-inp.diff{ border-color:var(--terra); color:var(--terra); font-weight:700; }
+  .stk-empty{ font-size:13.5px; color:var(--muted); text-align:center; padding:22px 14px; background:var(--card);
+    border:1px dashed rgba(28,27,25,0.14); border-radius:var(--radius-sm); }
+  /* template modal */
+  .stktpl-box{ text-align:left; width:calc(100vw - 32px); max-width:440px; }
+  .stktpl-hint{ font-size:12.5px; color:var(--muted); margin:2px 0 12px; line-height:1.5; }
+  .stktpl-list{ max-height:46vh; overflow-y:auto; margin:0 0 12px; }
+  .stktpl-row{ display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid rgba(28,27,25,0.07); }
+  .stktpl-row span{ flex:1; font-size:14px; color:var(--ink); }
+  .stktpl-row button{ flex:0 0 auto; width:28px; height:28px; border-radius:7px; border:1px solid rgba(28,27,25,0.12);
+    background:var(--paper); color:#b4443a; font-size:13px; cursor:pointer; }
+  .stktpl-add{ display:flex; gap:8px; margin:0 0 6px; }
+  .stktpl-input{ flex:1; font-family:'Sarabun',sans-serif; font-size:16px; color:var(--ink);
+    border:1px solid rgba(28,27,25,0.15); border-radius:9px; background:var(--paper); padding:9px 11px; }
+  @media (max-width:560px){
+    .stk-bar{ flex-direction:column; align-items:stretch; }
+    .stk-actions{ justify-content:space-between; }
+    .stk-btn{ flex:1; text-align:center; }
+  }
 </style>
 </head>
 <body>
@@ -2116,6 +2171,7 @@
     <div class="sidebar-nav">
       <button class="tab sidebar-item active" data-tab="home"><span class="si-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9.8 12 3l9 6.8V20a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1V9.8Z"/></svg></span><span class="si-label">หน้าหลัก</span></button>
       <button class="tab sidebar-item" data-tab="checklist"><span class="si-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 6h10M10 12h10M10 18h10"/><path d="m3.5 6 1.3 1.3L7.3 5M3.5 12l1.3 1.3L7.3 11M3.5 18l1.3 1.3L7.3 17"/></svg></span><span class="si-label">เช็คลิสต์</span></button>
+      <button class="tab sidebar-item" data-tab="stock"><span class="si-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 7.5 12 3l8.5 4.5v9L12 21l-8.5-4.5v-9Z"/><path d="M3.5 7.5 12 12l8.5-4.5M12 12v9"/></svg></span><span class="si-label">เช็คสต๊อก</span></button>
       <button class="tab sidebar-item" data-tab="timeline"><span class="si-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg></span><span class="si-label">แผนงาน</span></button>
       <button class="tab sidebar-item" data-tab="staff"><span class="si-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15.5 19v-1a3.8 3.8 0 0 0-3.8-3.8H7.3A3.8 3.8 0 0 0 3.5 18v1"/><circle cx="9.5" cy="8" r="3.2"/><path d="M20.5 19v-1a3.8 3.8 0 0 0-2.9-3.7"/><path d="M15.2 5.1a3.2 3.2 0 0 1 0 5.8"/></svg></span><span class="si-label">ทีมงาน</span></button>
       <button class="tab sidebar-item" data-tab="budget"><span class="si-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 16.5 9 10l4 4 7.5-7.5"/><path d="M16.5 6.5H21V11"/></svg></span><span class="si-label">กำไร</span></button>
@@ -2203,6 +2259,20 @@
     <div class="backup-note" id="backup-note"></div>
 
     <button class="pdf-btn" id="pdf-export-btn">🖨 ออก PDF สรุป Dashboard</button>
+  </div>
+
+  <div id="panel-stock" style="display:none;">
+    <div class="stk-intro">เช็คสต๊อกแยกต่องาน — แต่ละงานจำนวนไม่เท่ากัน ตั้ง “จำนวนที่ต้องเตรียม” ติ๊กตอนแพ็ค แล้วนับตอนกลับ · ข้อมูลเก็บกลาง ทุกคนเห็นตรงกัน</div>
+    <div class="stk-events" id="stk-events"></div>
+    <div class="stk-bar">
+      <div class="stk-progress" id="stk-progress">—</div>
+      <div class="stk-actions">
+        <button class="stk-btn ghost" id="stk-tpl-btn">⚙️ แก้เทมเพลต</button>
+        <button class="stk-btn ghost" id="stk-reseed-btn">↻ โหลดจากเทมเพลต</button>
+        <button class="stk-btn" id="stk-add-btn">➕ เพิ่มรายการ</button>
+      </div>
+    </div>
+    <div id="stk-list"></div>
   </div>
 
   <div id="panel-timeline" style="display:none;">
@@ -2981,6 +3051,19 @@
       <button id="prompt-cancel-btn" class="confirm-btn cancel">ยกเลิก</button>
       <button id="prompt-ok-btn" class="confirm-btn ok">ตกลง</button>
     </div>
+  </div>
+</div>
+
+<div id="stktpl-overlay" class="confirm-overlay" style="display:none;">
+  <div class="confirm-box stktpl-box">
+    <div class="confirm-msg">⚙️ แก้เทมเพลตรายการสต๊อก</div>
+    <div class="stktpl-hint">รายการกลางที่ทุกงานเริ่มต้นใช้ — แก้ตรงนี้แล้วกด “โหลดจากเทมเพลต” ในแต่ละงานเพื่อดึงรายการใหม่เข้าไป</div>
+    <div id="stktpl-list" class="stktpl-list"></div>
+    <div class="stktpl-add">
+      <input id="stktpl-input" class="stktpl-input" placeholder="ชื่อรายการใหม่ (เช่น แก้วพลาสติก)">
+      <button id="stktpl-add-btn" class="confirm-btn ok">เพิ่ม</button>
+    </div>
+    <div class="confirm-actions"><button id="stktpl-close-btn" class="confirm-btn cancel">ปิด</button></div>
   </div>
 </div>
 
@@ -6776,6 +6859,15 @@ async function loadAll(){
     }
   }catch(e){ /* keep default menuCustom */ }
   try{
+    const resStkT = await window.storage.get(STOCK_TPL_KEY, true);
+    if(resStkT && resStkT.value){ const a = JSON.parse(resStkT.value); if(Array.isArray(a)) stockTemplate = a; }
+  }catch(e){}
+  try{
+    const resStkD = await window.storage.get(STOCK_DATA_KEY, true);
+    if(resStkD && resStkD.value){ const o = JSON.parse(resStkD.value); if(o && typeof o==="object") stockData = o; }
+  }catch(e){}
+  try{ ensureStockTemplate(); }catch(e){}
+  try{
     const res7 = await window.storage.get(STAFF_KEY, true);
     if(res7 && res7.value){
       staff = JSON.parse(res7.value);
@@ -6879,6 +6971,7 @@ function renderAll(){
   try{ renderBudget(); }catch(e){ console.warn("renderBudget",e); }
   try{ renderStaff(); }catch(e){ console.warn("renderStaff",e); }
   try{ renderMenu(); }catch(e){ console.warn("renderMenu",e); }
+  try{ if(document.getElementById("panel-stock") && document.getElementById("panel-stock").style.display !== "none") renderStock(); else { ensureStockTemplate(); wireStockToolbar(); } }catch(e){ console.warn("renderStock",e); }
   try{ populateSurvey(); wireSurvey(); }catch(e){ console.warn("survey",e); }
   try{ renderTodos(); wireTodoForm(); }catch(e){}
   try{ updateSyncTime(); }catch(e){}
@@ -7038,12 +7131,158 @@ setInterval(()=>{
   if(!isTyping()) loadAllSafe();
 }, 6000);
 
+// ===== เช็คสต๊อกต่องาน (เทมเพลตกลาง + ปรับต่องาน · เก็บกลาง shared) =====
+const STOCK_TPL_KEY = "rangsan-booth-stock-template-v1";
+const STOCK_DATA_KEY = "rangsan-booth-stock-data-v1";
+const STOCK_TPL_SEED = [
+  "เมล็ดกาแฟ (เบสเอสเพรสโซ่)","นมสด","นมข้นหวาน","นมข้นจืด (ตีฟอง)",
+  "ผงมัทฉะ","ผงชาไทย / ใบชา","ผงโกโก้","น้ำตาลทราย","ไซรัป / น้ำเชื่อม","น้ำแข็ง",
+  "แก้วพลาสติก","ฝาแก้ว","หลอด","ทิชชู่","ถุงหิ้ว","ผ้ากรอง","ผ้าเช็ด / ผ้าขี้ริ้ว",
+  "ถุงขยะ","ป้ายเมนู","ป้ายร้าน / แบนเนอร์","ปลั๊กพ่วง","เครื่องชง","เครื่องบด","เงินทอน / กล่องเก็บคูปอง"
+];
+let stockTemplate = null;
+let stockData = {};
+let currentStockEventId = null;
+let _stkSaveTimer = null;
+function stockUid(){ return "s" + Date.now() + Math.floor(Math.random()*1000); }
+async function saveStockTemplate(){ try{ await setStorageWithRetry(STOCK_TPL_KEY, JSON.stringify(stockTemplate), "เทมเพลตสต๊อก"); }catch(e){} }
+async function saveStockData(){ try{ await setStorageWithRetry(STOCK_DATA_KEY, JSON.stringify(stockData), "สต๊อก"); }catch(e){} }
+function scheduleStockSave(){ clearTimeout(_stkSaveTimer); _stkSaveTimer = setTimeout(saveStockData, 700); }
+function ensureStockTemplate(){
+  if(!Array.isArray(stockTemplate) || !stockTemplate.length){
+    stockTemplate = STOCK_TPL_SEED.map((n,i)=>({ id:"st"+i, name:n }));
+  }
+}
+function stockEventList(){
+  if(typeof tlProjects !== "undefined" && tlProjects && tlProjects.length) return tlProjects.filter(p=>!p.archived);
+  return [{ id:"default", name:"งานทั่วไป", date:"" }];
+}
+function ensureStockEvent(){
+  const evs = stockEventList();
+  if(!currentStockEventId || !evs.some(e=>e.id===currentStockEventId)) currentStockEventId = evs.length ? evs[0].id : "default";
+}
+function seedStockMerge(eventId){
+  ensureStockTemplate();
+  if(!stockData[eventId]) stockData[eventId] = [];
+  const names = new Set(stockData[eventId].map(x=>x.name));
+  let added = 0;
+  stockTemplate.forEach(t=>{ if(!names.has(t.name)){ stockData[eventId].push({ id:stockUid(), name:t.name, need:"", packed:false, actual:"", note:"" }); added++; } });
+  return added;
+}
+function renderStock(){
+  const panel = document.getElementById("panel-stock");
+  if(!panel) return;
+  ensureStockTemplate();
+  ensureStockEvent();
+  if(!stockData[currentStockEventId] || !stockData[currentStockEventId].length){
+    seedStockMerge(currentStockEventId); saveStockData();
+  }
+  renderStockEvents();
+  renderStockList();
+  wireStockToolbar();
+}
+function renderStockEvents(){
+  const el = document.getElementById("stk-events"); if(!el) return;
+  const evs = stockEventList();
+  el.innerHTML = evs.map(e=>`<button class="stk-event${e.id===currentStockEventId?' on':''}" data-stkev="${escapeHtml(e.id)}">${escapeHtml(e.name)}${e.date?`<span class="stk-ev-date">${escapeHtml(e.date)}</span>`:''}</button>`).join("");
+  el.querySelectorAll("[data-stkev]").forEach(b=>b.addEventListener("click",()=>{
+    currentStockEventId = b.dataset.stkev;
+    if(!stockData[currentStockEventId] || !stockData[currentStockEventId].length){ seedStockMerge(currentStockEventId); saveStockData(); }
+    renderStock();
+  }));
+}
+function renderStockList(){
+  const el = document.getElementById("stk-list"); if(!el) return;
+  const items = stockData[currentStockEventId] || [];
+  const prog = document.getElementById("stk-progress");
+  const packed = items.filter(x=>x.packed).length;
+  if(prog) prog.innerHTML = items.length ? `แพ็คแล้ว <b>${packed}/${items.length}</b> รายการ` : "ยังไม่มีรายการ";
+  if(!items.length){ el.innerHTML = '<div class="stk-empty">ยังไม่มีรายการ — กด “↻ โหลดจากเทมเพลต” หรือ “➕ เพิ่มรายการ”</div>'; return; }
+  el.innerHTML = items.map(it=>{
+    const diff = (it.need!=="" && it.actual!=="" && Number(it.actual)!==Number(it.need));
+    return `<div class="stk-card${it.packed?' packed':''}" data-stkid="${it.id}">
+      <div class="stk-top">
+        <button class="stk-check${it.packed?' on':''}" data-stkcheck="${it.id}" title="แพ็คแล้ว">${it.packed?'✓':''}</button>
+        <div class="stk-name">${escapeHtml(it.name)}</div>
+        <button class="stk-del" data-stkdel="${it.id}" title="ลบ">✕</button>
+      </div>
+      <div class="stk-fields">
+        <label class="stk-field"><span>จำนวนที่ต้องเตรียม</span><input class="stk-inp" data-stkf="need" data-stkid="${it.id}" value="${escapeHtml(it.need)}" placeholder="เช่น 200 ใบ"></label>
+        <label class="stk-field"><span>นับได้จริง (ตอนกลับ)</span><input class="stk-inp${diff?' diff':''}" data-stkf="actual" data-stkid="${it.id}" value="${escapeHtml(it.actual)}" placeholder="นับตอนเก็บ"></label>
+        <label class="stk-field note"><span>หมายเหตุ</span><input class="stk-inp" data-stkf="note" data-stkid="${it.id}" value="${escapeHtml(it.note)}" placeholder="เช่น ใช้ไป 150 เหลือ 50"></label>
+      </div>
+    </div>`;
+  }).join("");
+  el.querySelectorAll("[data-stkcheck]").forEach(b=>b.addEventListener("click",()=>{
+    const it = items.find(x=>x.id===b.dataset.stkcheck); if(!it) return;
+    it.packed = !it.packed; saveStockData(); renderStockList();
+  }));
+  el.querySelectorAll("[data-stkdel]").forEach(b=>b.addEventListener("click", async ()=>{
+    const ok = await showConfirmModal("ลบรายการนี้ออกจากงานนี้?"); if(!ok) return;
+    stockData[currentStockEventId] = (stockData[currentStockEventId]||[]).filter(x=>x.id!==b.dataset.stkdel);
+    saveStockData(); renderStock();
+  }));
+  el.querySelectorAll("[data-stkf]").forEach(inp=>inp.addEventListener("input",()=>{
+    const it = items.find(x=>x.id===inp.dataset.stkid); if(!it) return;
+    it[inp.dataset.stkf] = inp.value;
+    if(inp.dataset.stkf==="actual" || inp.dataset.stkf==="need"){
+      const card = inp.closest(".stk-card");
+      const actualInp = card.querySelector('[data-stkf="actual"]');
+      const needV = card.querySelector('[data-stkf="need"]').value, actV = actualInp.value;
+      actualInp.classList.toggle("diff", (needV!=="" && actV!=="" && Number(actV)!==Number(needV)));
+    }
+    scheduleStockSave();
+  }));
+}
+function openStockTplModal(){
+  ensureStockTemplate();
+  const overlay = document.getElementById("stktpl-overlay");
+  const listEl = document.getElementById("stktpl-list");
+  const input = document.getElementById("stktpl-input");
+  const addBtn = document.getElementById("stktpl-add-btn");
+  const closeBtn = document.getElementById("stktpl-close-btn");
+  if(!overlay) return;
+  function draw(){
+    listEl.innerHTML = stockTemplate.length ? stockTemplate.map(t=>`<div class="stktpl-row"><span>${escapeHtml(t.name)}</span><button data-tpldel="${t.id}">✕</button></div>`).join("") : '<div class="stk-empty">ยังไม่มีรายการในเทมเพลต</div>';
+    listEl.querySelectorAll("[data-tpldel]").forEach(b=>b.addEventListener("click",()=>{
+      stockTemplate = stockTemplate.filter(t=>t.id!==b.dataset.tpldel); saveStockTemplate(); draw();
+    }));
+  }
+  function addItem(){ const v=input.value.trim(); if(!v) return; stockTemplate.push({ id:stockUid(), name:v }); input.value=""; saveStockTemplate(); draw(); input.focus(); }
+  draw();
+  overlay.style.display = "flex";
+  function cleanup(){ overlay.style.display="none"; addBtn.removeEventListener("click",addItem); closeBtn.removeEventListener("click",onClose); overlay.removeEventListener("click",onOverlay); input.removeEventListener("keydown",onKey); }
+  function onClose(){ cleanup(); renderStock(); }
+  function onOverlay(e){ if(e.target===overlay){ cleanup(); renderStock(); } }
+  function onKey(e){ if(e.key==="Enter"){ e.preventDefault(); addItem(); } }
+  addBtn.addEventListener("click",addItem); closeBtn.addEventListener("click",onClose); overlay.addEventListener("click",onOverlay); input.addEventListener("keydown",onKey);
+}
+function wireStockToolbar(){
+  const addBtn = document.getElementById("stk-add-btn");
+  if(addBtn && !addBtn._w){ addBtn._w=1; addBtn.addEventListener("click", async ()=>{
+    const name = await showPromptModal("เพิ่มรายการสต๊อก", "ชื่อรายการ", "");
+    if(!name || !name.trim()) return;
+    if(!stockData[currentStockEventId]) stockData[currentStockEventId]=[];
+    stockData[currentStockEventId].push({ id:stockUid(), name:name.trim(), need:"", packed:false, actual:"", note:"" });
+    saveStockData(); renderStock();
+  }); }
+  const reseedBtn = document.getElementById("stk-reseed-btn");
+  if(reseedBtn && !reseedBtn._w){ reseedBtn._w=1; reseedBtn.addEventListener("click", ()=>{
+    const added = seedStockMerge(currentStockEventId); saveStockData(); renderStock();
+    if(typeof showBackupNote==="function") showBackupNote(added ? ("เพิ่มจากเทมเพลต "+added+" รายการ") : "มีครบตามเทมเพลตแล้ว");
+  }); }
+  const tplBtn = document.getElementById("stk-tpl-btn");
+  if(tplBtn && !tplBtn._w){ tplBtn._w=1; tplBtn.addEventListener("click", openStockTplModal); }
+}
+
 document.querySelectorAll(".tab").forEach(tab=>{
   tab.addEventListener("click", ()=>{
     document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
     tab.classList.add("active");
     const target = tab.dataset.tab;
     document.getElementById("panel-home").style.display = target==="home" ? "block":"none";
+    document.getElementById("panel-stock").style.display = target==="stock" ? "block":"none";
+    if(target==="stock"){ try{ renderStock(); }catch(e){} }
     document.getElementById("panel-checklist").style.display = target==="checklist" ? "block":"none";
     document.getElementById("panel-timeline").style.display = target==="timeline" ? "block":"none";
     document.getElementById("panel-staff").style.display = target==="staff" ? "block":"none";
