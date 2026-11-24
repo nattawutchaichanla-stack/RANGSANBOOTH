@@ -2157,6 +2157,16 @@
   .stktpl-add{ display:flex; gap:8px; margin:0 0 6px; }
   .stktpl-input{ flex:1; font-family:'Sarabun',sans-serif; font-size:16px; color:var(--ink);
     border:1px solid rgba(28,27,25,0.15); border-radius:9px; background:var(--paper); padding:9px 11px; }
+  /* สถานะเชื่อมส่วนกลาง */
+  .sync-badge{ position:fixed; left:12px; bottom:calc(12px + env(safe-area-inset-bottom,0px)); z-index:60;
+    font-family:'Sarabun',sans-serif; font-size:12px; font-weight:600; border-radius:999px; padding:6px 12px;
+    background:var(--card); border:1px solid rgba(28,27,25,0.12); box-shadow:var(--shadow-sm);
+    color:var(--muted); cursor:pointer; display:flex; align-items:center; gap:6px; user-select:none; }
+  .sync-badge .dot{ width:8px; height:8px; border-radius:50%; background:#b0a99a; flex:none; }
+  .sync-badge.on{ color:var(--sage-dark); }
+  .sync-badge.on .dot{ background:#2e9e5b; }
+  .sync-badge.off{ color:#b4443a; border-color:rgba(180,68,58,0.32); }
+  .sync-badge.off .dot{ background:#d1493f; }
   @media (max-width:560px){
     .stk-bar{ flex-direction:column; align-items:stretch; }
     .stk-actions{ justify-content:space-between; }
@@ -2191,6 +2201,8 @@
     <div class="wrap">
 
     <div id="next-event-banner" class="next-event-banner" style="display:none;"></div>
+
+  <div id="sync-badge" class="sync-badge" title="สถานะเชื่อมส่วนกลาง"><span class="dot"></span>กำลังเชื่อม…</div>
 
   <div id="panel-home">
     <div class="home-hero">
@@ -3228,6 +3240,7 @@ if (!window.storage) {
     const url = SB_URL() + "/rest/v1/kv_store?scope=eq." + eq(scope) + "&key=eq." + eq(key) + "&select=value";
     const res = await sbFetch(url, { headers: sbHead() });
     if (!res.ok) throw new Error("sb " + res.status);
+    window.RANGSAN_SB_ONLINE = true; window.RANGSAN_SB_LAST = Date.now();
     const rows = await res.json();
     if (!rows.length) { const e = new Error("not found"); e.notFound = true; throw e; }
     return { key, value: rows[0].value, shared: !!shared };
@@ -3237,6 +3250,7 @@ if (!window.storage) {
     const url = SB_URL() + "/rest/v1/kv_store?on_conflict=scope,key";
     const res = await sbFetch(url, { method: "POST", headers: { ...sbHead(), "Content-Type": "application/json", "Prefer": "resolution=merge-duplicates,return=minimal" }, body: JSON.stringify([{ scope, key, value }]) });
     if (!res.ok) throw new Error("sb set " + res.status);
+    window.RANGSAN_SB_ONLINE = true; window.RANGSAN_SB_LAST = Date.now();
     return { key, value, shared: !!shared };
   }
   async function sbDel(key, shared) {
@@ -3257,7 +3271,7 @@ if (!window.storage) {
   }
 
   let _sbCircuitOpen = false;
-  function _tripSbCircuit(){ _sbCircuitOpen = true; setTimeout(()=>{ _sbCircuitOpen = false; }, 30000); }
+  function _tripSbCircuit(){ _sbCircuitOpen = true; window.RANGSAN_SB_ONLINE = false; setTimeout(()=>{ _sbCircuitOpen = false; }, 30000); }
 
   window.storage = {
     async get(key, shared) {
@@ -7274,6 +7288,29 @@ function wireStockToolbar(){
   const tplBtn = document.getElementById("stk-tpl-btn");
   if(tplBtn && !tplBtn._w){ tplBtn._w=1; tplBtn.addEventListener("click", openStockTplModal); }
 }
+
+// สถานะเชื่อมส่วนกลาง (ให้ทีมเห็นว่าซิงค์ขึ้นส่วนกลางจริงไหม)
+function updateSyncBadge(){
+  const el = document.getElementById("sync-badge"); if(!el) return;
+  const on = window.RANGSAN_SB_ONLINE;
+  if(on === true){ el.className = "sync-badge on"; el.innerHTML = '<span class="dot"></span>เชื่อมส่วนกลาง'; }
+  else if(on === false){ el.className = "sync-badge off"; el.innerHTML = '<span class="dot"></span>ออฟไลน์ · เก็บในเครื่อง'; }
+  else { el.className = "sync-badge"; el.innerHTML = '<span class="dot"></span>กำลังเชื่อม…'; }
+}
+(function wireSyncBadge(){
+  const el = document.getElementById("sync-badge");
+  if(el && !el._w){ el._w = 1; el.addEventListener("click", ()=>{
+    const on = window.RANGSAN_SB_ONLINE;
+    const msg = on === true
+      ? "✓ เชื่อมส่วนกลางอยู่ — ที่แก้จะ sync ให้ทุกคนเห็นตรงกัน"
+      : (on === false
+        ? "⚠ ตอนนี้เข้าส่วนกลางไม่ได้ — ข้อมูลเก็บในเครื่องนี้ก่อน คนอื่นยังไม่เห็นจนกว่าจะเชื่อมได้ (เช็กเน็ต / เซิร์ฟเวอร์กลางอาจถูกพัก)"
+        : "กำลังเชื่อมส่วนกลาง…");
+    if(typeof showBackupNote === "function") showBackupNote(msg);
+  }); }
+  setInterval(updateSyncBadge, 3000);
+  updateSyncBadge();
+})();
 
 document.querySelectorAll(".tab").forEach(tab=>{
   tab.addEventListener("click", ()=>{
